@@ -1,36 +1,71 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Métricas de Experiencia — Dashboard NPS
 
-## Getting Started
+Dashboard para visualizar encuestas NPS post-compra con evolución mensual.
 
-First, run the development server:
+## Stack
+- **Next.js 14** (App Router, TypeScript)
+- **Tailwind CSS** + shadcn/ui
+- **Recharts** para gráficos
+- **Supabase** para persistencia (o localStorage en modo local)
+- **Vercel** para deploy
+
+---
+
+## Setup local (sin Supabase)
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Abrí [http://localhost:3000](http://localhost:3000). Los datos se guardan en **localStorage** del navegador y persisten entre sesiones.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Setup con Supabase (para deploy en Vercel)
 
-## Learn More
+### 1. Crear proyecto Supabase
 
-To learn more about Next.js, take a look at the following resources:
+1. Andá a [app.supabase.com](https://app.supabase.com) y creá un proyecto
+2. En el SQL Editor, ejecutá el contenido de `supabase/migrations/001_initial.sql`
+3. En Settings → API, copiá la **Project URL** y la **anon public key**
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### 2. Variables de entorno
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```bash
+cp .env.local.example .env.local
+```
 
-## Deploy on Vercel
+Editá `.env.local` con tus credenciales de Supabase.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+### 3. Deploy en Vercel
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+1. Pusheá el código a GitHub
+2. Importá el repo en [vercel.com](https://vercel.com)
+3. Agregá las variables de entorno en Vercel:
+   - `NEXT_PUBLIC_SUPABASE_URL`
+   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
+4. Deploy
+
+---
+
+## Formato del CSV
+
+| Columna | Contenido |
+|---------|-----------|
+| C | Fecha (`YYYY-MM-DD HH:MM:SS`) |
+| D | País |
+| F | Device |
+| G | Browser |
+| H | Sistema operativo |
+| K | NPS (0-10) |
+| L | Mención negativa |
+| M | Mención positiva |
+| N | Comentario abierto |
+| S | Tipo de comentario |
+
+## NPS: cómo se calcula
+
+- **Promotores**: 9-10 · **Neutros**: 7-8 · **Detractores**: 0-6
+- **NPS** = % Promotores − % Detractores
+- Excelente ≥50 · Bueno 30-49 · Mejorable 0-29 · Crítico <0
