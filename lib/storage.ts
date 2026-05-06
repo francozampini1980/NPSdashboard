@@ -1,7 +1,8 @@
 'use client'
 
 import { MonthlyNPSData } from '@/types'
-import { supabase, isSupabaseConfigured } from './supabase'
+import { isSupabaseConfigured } from './supabase'
+import { getBrowserClient } from './supabase-browser'
 
 const LOCAL_STORAGE_KEY = 'nps_dashboard_data'
 
@@ -22,7 +23,7 @@ function saveLocalData(data: MonthlyNPSData[]): void {
 
 export async function getAllMonths(): Promise<MonthlyNPSData[]> {
   if (isSupabaseConfigured()) {
-    const { data, error } = await supabase
+    const { data, error } = await getBrowserClient()
       .from('nps_monthly_data')
       .select('*')
       .order('month', { ascending: true })
@@ -34,7 +35,7 @@ export async function getAllMonths(): Promise<MonthlyNPSData[]> {
 
 export async function getMonthData(month: string): Promise<MonthlyNPSData | null> {
   if (isSupabaseConfigured()) {
-    const { data, error } = await supabase
+    const { data, error } = await getBrowserClient()
       .from('nps_monthly_data')
       .select('*')
       .eq('month', month)
@@ -48,7 +49,7 @@ export async function getMonthData(month: string): Promise<MonthlyNPSData | null
 
 export async function upsertMonthData(data: MonthlyNPSData): Promise<void> {
   if (isSupabaseConfigured()) {
-    const { error } = await supabase
+    const { error } = await getBrowserClient()
       .from('nps_monthly_data')
       .upsert({ ...data, updated_at: new Date().toISOString() }, { onConflict: 'month,survey_type' })
     if (error) throw error
@@ -66,7 +67,7 @@ export async function upsertMonthData(data: MonthlyNPSData): Promise<void> {
 
 export async function deleteMonthData(month: string, surveyType = 'post_purchase'): Promise<void> {
   if (isSupabaseConfigured()) {
-    const { error } = await supabase
+    const { error } = await getBrowserClient()
       .from('nps_monthly_data')
       .delete()
       .eq('month', month)

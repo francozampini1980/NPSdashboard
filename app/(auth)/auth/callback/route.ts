@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code)
 
     if (!error) {
-      if (type === 'recovery') {
+      if (type === 'recovery' || type === 'invite') {
         return NextResponse.redirect(`${origin}/auth/update-password`)
       }
       return NextResponse.redirect(`${origin}/nps-post-compra`)
