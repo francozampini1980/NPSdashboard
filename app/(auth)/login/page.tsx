@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getSupabaseClient } from '@/lib/supabase'
+import { getBrowserClient } from '@/lib/supabase-browser'
 import { BarChart3, Loader2 } from 'lucide-react'
 
 type Mode = 'login' | 'forgot'
@@ -20,7 +20,7 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const supabase = getSupabaseClient()
+    const supabase = getBrowserClient()
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       setError('Email o contraseña incorrectos.')
@@ -35,7 +35,7 @@ export default function LoginPage() {
     e.preventDefault()
     setError('')
     setLoading(true)
-    const supabase = getSupabaseClient()
+    const supabase = getBrowserClient()
     await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: `${window.location.origin}/auth/callback?type=recovery`,
     })

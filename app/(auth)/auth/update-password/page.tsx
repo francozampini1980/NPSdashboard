@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { getSupabaseClient } from '@/lib/supabase'
+import { getBrowserClient } from '@/lib/supabase-browser'
 import { BarChart3, Loader2 } from 'lucide-react'
 
 export default function UpdatePasswordPage() {
@@ -24,7 +24,7 @@ export default function UpdatePasswordPage() {
       return
     }
     setLoading(true)
-    const supabase = getSupabaseClient()
+    const supabase = getBrowserClient()
     const { error } = await supabase.auth.updateUser({ password })
     if (error) {
       setError('No se pudo actualizar la contraseña. Intentá de nuevo.')

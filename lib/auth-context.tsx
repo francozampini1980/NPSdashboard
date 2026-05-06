@@ -1,8 +1,8 @@
 'use client'
 
 import { createContext, useContext, useEffect, useState } from 'react'
-import type { User } from '@supabase/supabase-js'
-import { getSupabaseClient } from './supabase'
+import type { User, Session, AuthChangeEvent } from '@supabase/supabase-js'
+import { getBrowserClient } from './supabase-browser'
 
 export type Role = 'visitor' | 'editor' | 'dios'
 
@@ -26,7 +26,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true)
 
   async function fetchRole(userId: string): Promise<Role> {
-    const supabase = getSupabaseClient()
+    const supabase = getBrowserClient()
     const { data } = await supabase
       .from('profiles')
       .select('role')
@@ -36,9 +36,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }
 
   useEffect(() => {
-    const supabase = getSupabaseClient()
+    const supabase = getBrowserClient()
 
-    supabase.auth.getSession().then(async ({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data }: { data: { session: Session | null } }) => {
+      const session = data.session
       setUser(session?.user ?? null)
       if (session?.user) {
         const r = await fetchRole(session.user.id)
@@ -48,7 +49,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     })
 
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (_event, session) => {
+      async (_event: AuthChangeEvent, session: Session | null) => {
         setUser(session?.user ?? null)
         if (session?.user) {
           const r = await fetchRole(session.user.id)
@@ -63,7 +64,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [])
 
   async function signOut() {
-    const supabase = getSupabaseClient()
+    const supabase = getBrowserClient()
     await supabase.auth.signOut()
   }
 
