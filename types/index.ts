@@ -1,3 +1,42 @@
+export interface BaseNPSDataPoint {
+  month: string
+  nps_score: number
+  total_responses: number
+  promoters_count: number
+  neutrals_count: number
+  detractors_count: number
+}
+
+export interface PostEntregaMonthlyData {
+  id?: string
+  month: string
+  sent_count: number
+  total_responses: number
+  nps_score: number
+  promoters_count: number
+  neutrals_count: number
+  detractors_count: number
+  score_distribution: Record<string, number>
+  ces_score: number
+  ces_good_pct: number
+  ces_regular_pct: number
+  ces_bad_pct: number
+  csat_puntualidad_score: number
+  csat_puntualidad_good_pct: number
+  csat_puntualidad_regular_pct: number
+  csat_puntualidad_bad_pct: number
+  csat_predisposicion_score: number
+  csat_predisposicion_good_pct: number
+  csat_predisposicion_regular_pct: number
+  csat_predisposicion_bad_pct: number
+  csat_condicion_score: number
+  csat_condicion_good_pct: number
+  csat_condicion_regular_pct: number
+  csat_condicion_bad_pct: number
+  created_at?: string
+  updated_at?: string
+}
+
 export interface MonthlyNPSData {
   id?: string
   month: string // YYYY-MM

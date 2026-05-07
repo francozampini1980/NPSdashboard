@@ -4,10 +4,10 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, ReferenceLine
 } from 'recharts'
-import { MonthlyNPSData, formatMonthLabel } from '@/types'
+import { BaseNPSDataPoint, formatMonthLabel } from '@/types'
 
 interface Props {
-  data: MonthlyNPSData[]
+  data: BaseNPSDataPoint[]
 }
 
 export default function EvolutiveNPS({ data }: Props) {

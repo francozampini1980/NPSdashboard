@@ -33,8 +33,7 @@ const navItems: NavItem[] = [
     href: '/nps-post-entrega',
     label: 'NPS Post Entrega',
     icon: Truck,
-    enabled: false,
-    badge: 'Próximamente',
+    enabled: true,
   },
   {
     href: '/como-medimos',
