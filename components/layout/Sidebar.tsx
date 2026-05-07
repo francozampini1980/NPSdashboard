@@ -96,21 +96,21 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     >
       {/* Logo + toggle */}
       <div
-        className={`flex items-center border-b border-white/10 transition-all duration-200 ${
+        className={`flex items-center border-b border-blue-700/20 transition-all duration-200 ${
           collapsed ? 'justify-center px-0 py-5' : 'justify-between px-6 py-6'
         }`}
       >
         {!collapsed && (
           <div>
-            <h1 className="text-white font-bold text-lg leading-tight">
+            <h1 className="text-blue-700 font-bold text-lg leading-tight">
               Métricas de<br />Experiencia
             </h1>
-            <p className="text-slate-400 text-xs mt-1">Dashboard NPS</p>
+            <p className="text-blue-600/70 text-xs mt-1">Dashboard NPS</p>
           </div>
         )}
         <button
           onClick={onToggle}
-          className="text-slate-400 hover:text-white transition-colors shrink-0"
+          className="text-blue-600 hover:text-blue-800 transition-colors shrink-0"
           title={collapsed ? 'Expandir menú' : 'Contraer menú'}
         >
           {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
@@ -133,12 +133,12 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                   collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
                 }`}
               >
-                <Icon size={18} className="text-slate-400 shrink-0" />
+                <Icon size={18} className="text-blue-600 shrink-0" />
                 {!collapsed && (
                   <>
-                    <span className="text-slate-400 text-sm flex-1">{item.label}</span>
+                    <span className="text-blue-600 text-sm flex-1">{item.label}</span>
                     {item.badge && (
-                      <span className="text-[10px] bg-slate-700 text-slate-300 px-1.5 py-0.5 rounded">
+                      <span className="text-[10px] bg-blue-700/15 text-blue-700 px-1.5 py-0.5 rounded">
                         {item.badge}
                       </span>
                     )}
@@ -159,18 +159,18 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
               } ${
                 isActive
-                  ? 'bg-blue-500/15 text-blue-400'
-                  : 'text-slate-300 hover:bg-white/5 hover:text-white'
+                  ? 'bg-blue-700/20 text-blue-700'
+                  : 'text-blue-600 hover:bg-black/5 hover:text-blue-800'
               }`}
             >
               <Icon
                 size={18}
-                className={`shrink-0 ${isActive ? 'text-blue-400' : 'text-slate-400 group-hover:text-white'}`}
+                className={`shrink-0 ${isActive ? 'text-blue-700' : 'text-blue-600 group-hover:text-blue-800'}`}
               />
               {!collapsed && (
                 <>
                   <span className="text-sm flex-1">{item.label}</span>
-                  {isActive && <ChevronRight size={14} className="text-blue-400" />}
+                  {isActive && <ChevronRight size={14} className="text-blue-700" />}
                 </>
               )}
             </Link>
@@ -179,11 +179,11 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </nav>
 
       {/* User info + logout */}
-      <div className={`py-4 border-t border-white/10 ${collapsed ? 'px-2' : 'px-4'}`}>
+      <div className={`py-4 border-t border-blue-700/20 ${collapsed ? 'px-2' : 'px-4'}`}>
         {!collapsed && !loading && user && (
           <div className="mb-3">
-            <p className="text-slate-300 text-xs font-medium truncate">{user.email}</p>
-            <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-slate-700 text-slate-300">
+            <p className="text-blue-700 text-xs font-medium truncate">{user.email}</p>
+            <span className="inline-block mt-1 text-[10px] px-1.5 py-0.5 rounded bg-blue-700/15 text-blue-700">
               {roleLabel(role)}
             </span>
           </div>
@@ -191,7 +191,7 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         <button
           onClick={handleSignOut}
           title={collapsed ? 'Cerrar sesión' : undefined}
-          className={`flex items-center text-slate-400 hover:text-white text-sm transition-colors w-full ${
+          className={`flex items-center text-blue-600 hover:text-blue-800 text-sm transition-colors w-full ${
             collapsed ? 'justify-center gap-0' : 'gap-2'
           }`}
         >

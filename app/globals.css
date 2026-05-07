@@ -14,10 +14,10 @@
   --radius: 0.5rem;
 
   /* Sidebar */
-  --sidebar-bg: #1E2A3A;
-  --sidebar-text: #CBD5E1;
+  --sidebar-bg: #dcbfff;
+  --sidebar-text: #51118a;
   --sidebar-active: #871ee3;
-  --sidebar-active-bg: rgba(135, 30, 227, 0.15);
+  --sidebar-active-bg: rgba(135, 30, 227, 0.12);
 
   /* NPS colors */
   --color-promoter: #10B981;
