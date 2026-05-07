@@ -11,6 +11,7 @@ import MentionsBar from '@/components/charts/MentionsBar'
 import EvolutiveNPS from '@/components/charts/EvolutiveNPS'
 import EvolutivePromoters from '@/components/charts/EvolutivePromoters'
 import EvolutiveMentions from '@/components/charts/EvolutiveMentions'
+import CommentAnalysisPanel from '@/components/charts/CommentAnalysisPanel'
 
 const MONTHS_PER_PAGE = 6
 
@@ -156,6 +157,13 @@ export default function NPSPostCompraPage() {
                   title="% Menciones negativas"
                 />
               </div>
+
+              {/* Análisis IA */}
+              <CommentAnalysisPanel
+                surveyType="nps_compra"
+                month={currentData.month}
+                totalComments={currentData.open_comments?.length ?? 0}
+              />
             </div>
           )}
         </div>

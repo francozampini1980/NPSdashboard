@@ -116,6 +116,10 @@ export function parseCSV(
       // Ignore mentions not in the predefined list
     })
 
+  const openComments = dataRows
+    .map(row => row[COL.comentario]?.trim())
+    .filter((v): v is string => !!v && v.length > 2)
+
   const monthData: MonthlyNPSData = {
     month: detectedMonth,
     survey_type: surveyType,
@@ -128,6 +132,7 @@ export function parseCSV(
     score_distribution: scoreDistribution,
     promotion_reasons: promotionReasons,
     detraction_reasons: detractionReasons,
+    open_comments: openComments,
   }
 
   return { data: monthData, detectedMonth, rowCount: total }

@@ -7,6 +7,30 @@ export interface BaseNPSDataPoint {
   detractors_count: number
 }
 
+export interface CommentAnalysisTopic {
+  topico: string
+  descripcion: string
+  porcentaje: number
+}
+
+export interface CommentAnalysisResult {
+  positivo: CommentAnalysisTopic[]
+  negativo: CommentAnalysisTopic[]
+}
+
+export interface CommentAnalysis {
+  id?: string
+  survey_type: 'nps_compra' | 'nps_entrega'
+  month: string
+  status: 'pending' | 'processing' | 'done' | 'error'
+  total_comments?: number
+  analyzed_comments?: number
+  result?: CommentAnalysisResult
+  error_text?: string
+  created_at?: string
+  updated_at?: string
+}
+
 export interface PostEntregaMonthlyData {
   id?: string
   month: string
@@ -33,6 +57,7 @@ export interface PostEntregaMonthlyData {
   csat_condicion_good_pct: number
   csat_condicion_regular_pct: number
   csat_condicion_bad_pct: number
+  open_comments?: string[]
   created_at?: string
   updated_at?: string
 }
@@ -50,6 +75,7 @@ export interface MonthlyNPSData {
   score_distribution: Record<string, number> // {"0": n, "1": n, ..., "10": n}
   promotion_reasons: Record<string, number>
   detraction_reasons: Record<string, number>
+  open_comments?: string[]
   created_at?: string
   updated_at?: string
 }
