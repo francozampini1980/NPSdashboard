@@ -39,8 +39,7 @@ const navItems: NavItem[] = [
     href: '/como-medimos',
     label: '¿Cómo medimos?',
     icon: HelpCircle,
-    enabled: false,
-    badge: 'Próximamente',
+    enabled: true,
   },
   {
     href: '/configuracion',
