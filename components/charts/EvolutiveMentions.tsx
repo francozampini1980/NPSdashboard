@@ -7,18 +7,35 @@ interface Props {
   type: 'positive' | 'negative'
 }
 
-function getCellStyle(pct: number, type: 'positive' | 'negative'): string {
+function computeColumnRanks(rows: { cells: { pct: number }[] }[]): number[][] {
+  const numCols = rows.length > 0 ? rows[0].cells.length : 0
+  // result[colIdx][rowIdx] = 1|2|3 or 0 (not top 3)
+  const result: number[][] = Array.from({ length: numCols }, () =>
+    new Array(rows.length).fill(0)
+  )
+  for (let colIdx = 0; colIdx < numCols; colIdx++) {
+    const sorted = rows
+      .map((row, rowIdx) => ({ rowIdx, pct: row.cells[colIdx].pct }))
+      .filter(v => v.pct > 0)
+      .sort((a, b) => b.pct - a.pct)
+    sorted.slice(0, 3).forEach((v, i) => {
+      result[colIdx][v.rowIdx] = i + 1
+    })
+  }
+  return result
+}
+
+function getRankStyle(rank: number, pct: number, type: 'positive' | 'negative'): string {
   if (pct === 0) return 'bg-slate-50 text-slate-300'
+  if (rank === 0) return 'bg-slate-100 text-slate-500'
   if (type === 'positive') {
-    if (pct >= 40) return 'bg-emerald-600 text-white font-semibold'
-    if (pct >= 25) return 'bg-emerald-400 text-white font-semibold'
-    if (pct >= 15) return 'bg-emerald-200 text-emerald-900'
-    return 'bg-emerald-100 text-emerald-700'
+    if (rank === 1) return 'bg-emerald-700 text-white font-bold'
+    if (rank === 2) return 'bg-emerald-500 text-white font-semibold'
+    return 'bg-emerald-200 text-emerald-900 font-medium'
   } else {
-    if (pct >= 40) return 'bg-red-600 text-white font-semibold'
-    if (pct >= 25) return 'bg-red-400 text-white font-semibold'
-    if (pct >= 15) return 'bg-red-200 text-red-900'
-    return 'bg-red-100 text-red-700'
+    if (rank === 1) return 'bg-red-700 text-white font-bold'
+    if (rank === 2) return 'bg-red-500 text-white font-semibold'
+    return 'bg-red-200 text-red-900 font-medium'
   }
 }
 
@@ -27,9 +44,7 @@ export default function EvolutiveMentions({ data, type }: Props) {
   const reasonsKey = type === 'positive' ? 'promotion_reasons' : 'detraction_reasons'
   const groupKey = type === 'positive' ? 'promoters_count' : 'detractors_count'
   const title = type === 'positive' ? 'Evolución motivos de promoción' : 'Evolución motivos de detracción'
-  const accentClass = type === 'positive' ? 'text-emerald-700' : 'text-red-700'
 
-  // Build a matrix: rows = topics, cols = months
   const rows = topics.map(topic => {
     const cells = data.map(d => {
       const reasons = d[reasonsKey] as Record<string, number>
@@ -38,10 +53,10 @@ export default function EvolutiveMentions({ data, type }: Props) {
       const pct = groupTotal > 0 ? Math.round((count / groupTotal) * 100) : 0
       return { pct, count, month: d.month }
     })
-    // Skip rows with all zeros
-    const hasData = cells.some(c => c.count > 0)
-    return { topic, cells, hasData }
+    return { topic, cells, hasData: cells.some(c => c.count > 0) }
   }).filter(r => r.hasData)
+
+  const columnRanks = computeColumnRanks(rows)
 
   if (rows.length === 0) {
     return (
@@ -52,12 +67,26 @@ export default function EvolutiveMentions({ data, type }: Props) {
     )
   }
 
+  const rankColor = type === 'positive'
+    ? ['bg-emerald-700', 'bg-emerald-500', 'bg-emerald-200']
+    : ['bg-red-700', 'bg-red-500', 'bg-red-200']
+
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5">
       <h3 className="text-sm font-semibold text-slate-700 mb-1">{title}</h3>
-      <p className="text-xs text-slate-400 mb-4">
-        % sobre {type === 'positive' ? 'promotores' : 'detractores'} del mes · intensidad del color = magnitud
-      </p>
+      <div className="flex items-center gap-4 mb-4">
+        <p className="text-xs text-slate-400">
+          % sobre {type === 'positive' ? 'promotores' : 'detractores'} · top 3 por mes resaltado
+        </p>
+        <div className="flex items-center gap-2 ml-auto">
+          {(['#1', '#2', '#3'] as const).map((label, i) => (
+            <span key={label} className="flex items-center gap-1 text-xs text-slate-500">
+              <span className={`inline-block w-3 h-3 rounded-sm ${rankColor[i]}`} />
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
       <div className="overflow-x-auto">
         <table className="w-full text-xs border-separate border-spacing-0">
           <thead>
@@ -76,15 +105,15 @@ export default function EvolutiveMentions({ data, type }: Props) {
             </tr>
           </thead>
           <tbody>
-            {rows.map(({ topic, cells }) => (
+            {rows.map(({ topic, cells }, rowIdx) => (
               <tr key={topic} className="group">
                 <td className="text-slate-700 py-1.5 pr-4 sticky left-0 bg-white group-hover:text-slate-900">
                   {topic}
                 </td>
-                {cells.map(({ pct, count, month }) => (
+                {cells.map(({ pct, count, month }, colIdx) => (
                   <td key={month} className="py-1.5 px-1 text-center">
                     <span
-                      className={`inline-block w-full rounded px-1 py-1 tabular-nums ${getCellStyle(pct, type)}`}
+                      className={`inline-block w-full rounded px-1 py-1 tabular-nums ${getRankStyle(columnRanks[colIdx][rowIdx], pct, type)}`}
                       title={`${count} resp.`}
                     >
                       {pct > 0 ? `${pct}%` : '—'}

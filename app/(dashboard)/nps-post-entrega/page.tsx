@@ -15,7 +15,7 @@ import EvolutiveMetric from '@/components/charts/EvolutiveMetric'
 const MONTHS_PER_PAGE = 6
 
 export default function NPSPostEntregaPage() {
-  const [activeTab, setActiveTab] = useState<'mes-actual' | 'evolutivo'>('mes-actual')
+  const [activeTab, setActiveTab] = useState<'mes-actual' | 'evolutivo'>('evolutivo')
   const [allMonths, setAllMonths] = useState<PostEntregaMonthlyData[]>([])
   const [selectedMonth, setSelectedMonth] = useState<string>('')
   const [evolutivePage, setEvolutivePage] = useState(0)
@@ -26,8 +26,10 @@ export default function NPSPostEntregaPage() {
     try {
       const data = await getAllPostEntregaMonths()
       setAllMonths(data)
-      if (data.length > 0 && !selectedMonth) {
-        setSelectedMonth(data[data.length - 1].month)
+      if (data.length > 0) {
+        if (!selectedMonth) setSelectedMonth(data[data.length - 1].month)
+        const totalPages = Math.ceil(data.length / MONTHS_PER_PAGE)
+        setEvolutivePage(Math.max(0, totalPages - 1))
       }
     } finally {
       setLoading(false)

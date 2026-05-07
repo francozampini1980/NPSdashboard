@@ -15,7 +15,7 @@ import EvolutiveMentions from '@/components/charts/EvolutiveMentions'
 const MONTHS_PER_PAGE = 6
 
 export default function NPSPostCompraPage() {
-  const [activeTab, setActiveTab] = useState<'mes-actual' | 'evolutivo'>('mes-actual')
+  const [activeTab, setActiveTab] = useState<'mes-actual' | 'evolutivo'>('evolutivo')
   const [allMonths, setAllMonths] = useState<MonthlyNPSData[]>([])
   const [selectedMonth, setSelectedMonth] = useState<string>('')
   const [evolutivePage, setEvolutivePage] = useState(0)
@@ -27,8 +27,10 @@ export default function NPSPostCompraPage() {
       const data = await getAllMonths()
       const postPurchase = data.filter(d => d.survey_type === 'post_purchase')
       setAllMonths(postPurchase)
-      if (postPurchase.length > 0 && !selectedMonth) {
-        setSelectedMonth(postPurchase[postPurchase.length - 1].month)
+      if (postPurchase.length > 0) {
+        if (!selectedMonth) setSelectedMonth(postPurchase[postPurchase.length - 1].month)
+        const totalPages = Math.ceil(postPurchase.length / MONTHS_PER_PAGE)
+        setEvolutivePage(Math.max(0, totalPages - 1))
       }
     } finally {
       setLoading(false)

@@ -31,9 +31,9 @@ export default function EvolutiveNPS({ data }: Props) {
           <Line
             type="monotone"
             dataKey="nps"
-            stroke="#3B82F6"
+            stroke="#871ee3"
             strokeWidth={2.5}
-            dot={{ fill: '#3B82F6', r: 4 }}
+            dot={{ fill: '#871ee3', r: 4 }}
             activeDot={{ r: 6 }}
           />
         </LineChart>

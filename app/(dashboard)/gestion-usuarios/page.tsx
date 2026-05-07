@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useAuth } from '@/lib/auth-context'
 import { useRouter } from 'next/navigation'
-import { UserPlus, Trash2, Loader2, RefreshCw } from 'lucide-react'
+import { UserPlus, Trash2, Loader2, RefreshCw, KeyRound } from 'lucide-react'
 
 interface UserRow {
   id: string
@@ -39,6 +39,15 @@ export default function GestionUsuariosPage() {
   const [inviting, setInviting] = useState(false)
   const [inviteMsg, setInviteMsg] = useState('')
   const [inviteError, setInviteError] = useState('')
+
+  // Create user form
+  const [createEmail, setCreateEmail] = useState('')
+  const [createPassword, setCreatePassword] = useState('')
+  const [createConfirm, setCreateConfirm] = useState('')
+  const [createRole, setCreateRole] = useState<'visitor' | 'editor' | 'dios'>('visitor')
+  const [creating, setCreating] = useState(false)
+  const [createMsg, setCreateMsg] = useState('')
+  const [createError, setCreateError] = useState('')
 
   // Delete confirmation
   const [deletingId, setDeletingId] = useState<string | null>(null)
@@ -112,6 +121,36 @@ export default function GestionUsuariosPage() {
     }
   }
 
+  async function handleCreateUser(e: React.FormEvent) {
+    e.preventDefault()
+    setCreateError('')
+    setCreateMsg('')
+    if (createPassword !== createConfirm) {
+      setCreateError('Las contraseñas no coinciden.')
+      return
+    }
+    setCreating(true)
+    try {
+      const res = await fetch('/api/admin/create-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: createEmail, password: createPassword, role: createRole }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setCreateMsg(`Usuario ${createEmail} creado correctamente.`)
+      setCreateEmail('')
+      setCreatePassword('')
+      setCreateConfirm('')
+      setCreateRole('visitor')
+      fetchUsers()
+    } catch (e: unknown) {
+      setCreateError(e instanceof Error ? e.message : 'Error al crear usuario')
+    } finally {
+      setCreating(false)
+    }
+  }
+
   async function handleRoleChange(userId: string, newRole: string) {
     setUpdatingId(userId)
     try {
@@ -141,11 +180,80 @@ export default function GestionUsuariosPage() {
         <p className="text-slate-500 text-sm mt-1">Invitá usuarios y gestioná sus roles de acceso.</p>
       </div>
 
+      {/* Create user form */}
+      <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
+        <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+          <KeyRound size={16} />
+          Crear usuario con contraseña
+        </h2>
+        <form onSubmit={handleCreateUser} className="space-y-3">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div className="md:col-span-1">
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">Email</label>
+              <input
+                type="email"
+                value={createEmail}
+                onChange={e => setCreateEmail(e.target.value)}
+                required
+                placeholder="usuario@email.com"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">Contraseña</label>
+              <input
+                type="password"
+                value={createPassword}
+                onChange={e => setCreatePassword(e.target.value)}
+                required
+                placeholder="Mín. 6 caracteres"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">Confirmar contraseña</label>
+              <input
+                type="password"
+                value={createConfirm}
+                onChange={e => setCreateConfirm(e.target.value)}
+                required
+                placeholder="Repetir contraseña"
+                className="w-full px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="flex gap-3 items-end">
+            <div>
+              <label className="block text-xs font-medium text-slate-600 mb-1.5">Rol</label>
+              <select
+                value={createRole}
+                onChange={e => setCreateRole(e.target.value as UserRow['role'])}
+                className="px-3 py-2 rounded-lg border border-slate-300 text-sm text-slate-800 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                <option value="visitor">Visitante</option>
+                <option value="editor">Editor</option>
+                <option value="dios">Dios</option>
+              </select>
+            </div>
+            <button
+              type="submit"
+              disabled={creating}
+              className="flex items-center gap-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-60 text-white text-sm font-medium px-4 py-2 rounded-lg transition-colors"
+            >
+              {creating && <Loader2 size={14} className="animate-spin" />}
+              {creating ? 'Creando…' : 'Crear usuario'}
+            </button>
+          </div>
+        </form>
+        {createMsg && <p className="mt-3 text-sm text-emerald-700 bg-emerald-50 rounded-lg px-3 py-2">{createMsg}</p>}
+        {createError && <p className="mt-3 text-sm text-red-700 bg-red-50 rounded-lg px-3 py-2">{createError}</p>}
+      </div>
+
       {/* Invite form */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
         <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
           <UserPlus size={16} />
-          Invitar usuario
+          Invitar usuario por email
         </h2>
         <form onSubmit={handleInvite} className="flex gap-3 items-end flex-wrap">
           <div className="flex-1 min-w-52">

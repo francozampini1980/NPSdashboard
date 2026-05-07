@@ -1,0 +1,33 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import Sidebar from './Sidebar'
+
+export default function DashboardShell({ children }: { children: React.ReactNode }) {
+  const [collapsed, setCollapsed] = useState(false)
+
+  useEffect(() => {
+    const saved = localStorage.getItem('sidebar-collapsed')
+    if (saved === 'true') setCollapsed(true)
+  }, [])
+
+  function toggle() {
+    setCollapsed(prev => {
+      localStorage.setItem('sidebar-collapsed', String(!prev))
+      return !prev
+    })
+  }
+
+  return (
+    <div className="flex min-h-screen">
+      <Sidebar collapsed={collapsed} onToggle={toggle} />
+      <main
+        className={`flex-1 min-h-screen bg-[#F8FAFC] transition-all duration-200 ${
+          collapsed ? 'ml-16' : 'ml-64'
+        }`}
+      >
+        {children}
+      </main>
+    </div>
+  )
+}

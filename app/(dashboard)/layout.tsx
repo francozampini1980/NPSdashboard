@@ -1,5 +1,5 @@
 import { AuthProvider } from '@/lib/auth-context'
-import Sidebar from '@/components/layout/Sidebar'
+import DashboardShell from '@/components/layout/DashboardShell'
 
 export default function DashboardLayout({
   children,
@@ -8,12 +8,7 @@ export default function DashboardLayout({
 }) {
   return (
     <AuthProvider>
-      <div className="flex min-h-screen">
-        <Sidebar />
-        <main className="flex-1 ml-64 min-h-screen bg-[#F8FAFC]">
-          {children}
-        </main>
-      </div>
+      <DashboardShell>{children}</DashboardShell>
     </AuthProvider>
   )
 }
