@@ -140,6 +140,17 @@ export default function NPSPostEntregaPage() {
                 total={currentData.total_responses}
               />
 
+              <CommentHighlights
+                positiveAspects={currentData.positive_aspects}
+                negativeAspects={currentData.nps_negative_aspects}
+                openComments={currentData.open_comments}
+                negativeLabel="Calificaciones negativas y neutras 🤬"
+              />
+              <CESAspectsCard
+                aspects={currentData.negative_aspects}
+                cesComments={currentData.ces_comments}
+              />
+
               {/* Section: CES */}
               <div>
                 <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
@@ -155,17 +166,6 @@ export default function NPSPostEntregaPage() {
                   badPct={currentData.ces_bad_pct}
                 />
               </div>
-
-              <CommentHighlights
-                positiveAspects={currentData.positive_aspects}
-                negativeAspects={currentData.nps_negative_aspects}
-                openComments={currentData.open_comments}
-                negativeLabel="Calificaciones negativas y neutras 🤬"
-              />
-              <CESAspectsCard
-                aspects={currentData.negative_aspects}
-                cesComments={currentData.ces_comments}
-              />
 
               {/* Section: CSAT */}
               <div>
