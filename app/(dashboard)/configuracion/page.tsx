@@ -6,14 +6,19 @@ import { getAllMonths, upsertMonthData, deleteMonthData } from '@/lib/storage'
 import { getAllPostEntregaMonths, upsertPostEntregaMonth, deletePostEntregaMonth } from '@/lib/storage-post-entrega'
 import { parseCSV } from '@/lib/csv-parser'
 import { parsePostEntregaCSV } from '@/lib/csv-parser-post-entrega'
-import { MonthlyNPSData, PostEntregaMonthlyData, formatMonthLabelFull } from '@/types'
+import { MonthlyNPSData, PostEntregaMonthlyData, Aspect, formatMonthLabelFull } from '@/types'
 
 interface UploadState {
   status: 'idle' | 'parsing' | 'success' | 'error'
   message?: string
 }
 
-const EMPTY_ASPECTS = ['', '', '', '']
+const EMPTY_ASPECTS: Aspect[] = [
+  { title: '', description: '' },
+  { title: '', description: '' },
+  { title: '', description: '' },
+  { title: '', description: '' },
+]
 
 function AspectsInput({
   label,
@@ -22,29 +27,43 @@ function AspectsInput({
   color,
 }: {
   label: string
-  values: string[]
-  onChange: (vals: string[]) => void
+  values: Aspect[]
+  onChange: (vals: Aspect[]) => void
   color: 'emerald' | 'red'
 }) {
-  const borderClass = color === 'emerald' ? 'focus:ring-emerald-400/30 focus:border-emerald-400' : 'focus:ring-red-400/30 focus:border-red-400'
+  const titleBorder = color === 'emerald'
+    ? 'focus:ring-emerald-400/30 focus:border-emerald-400'
+    : 'focus:ring-red-400/30 focus:border-red-400'
+  const numClass = color === 'emerald' ? 'text-emerald-600' : 'text-red-500'
+
+  function update(i: number, field: 'title' | 'description', val: string) {
+    const next = values.map((a, idx) => idx === i ? { ...a, [field]: val } : a)
+    onChange(next)
+  }
+
   return (
     <div>
-      <p className="text-xs font-semibold text-slate-600 mb-2">{label}</p>
-      <div className="space-y-2">
+      <p className="text-xs font-semibold text-slate-600 mb-3">{label}</p>
+      <div className="space-y-4">
         {values.map((v, i) => (
-          <div key={i} className="flex items-center gap-2">
-            <span className="text-xs text-slate-400 w-4 shrink-0">{i + 1}.</span>
-            <input
-              type="text"
-              value={v}
-              onChange={e => {
-                const next = [...values]
-                next[i] = e.target.value
-                onChange(next)
-              }}
-              placeholder={`Aspecto ${i + 1}…`}
-              className={`flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 ${borderClass}`}
-            />
+          <div key={i} className="flex items-start gap-2">
+            <span className={`text-xs font-bold w-4 shrink-0 mt-2 ${numClass}`}>{i + 1}.</span>
+            <div className="flex-1 space-y-1.5">
+              <input
+                type="text"
+                value={v.title}
+                onChange={e => update(i, 'title', e.target.value)}
+                placeholder="Título (ej: Incumplimiento de plazos)"
+                className={`w-full border border-slate-200 rounded-lg px-3 py-1.5 text-sm font-medium focus:outline-none focus:ring-2 ${titleBorder}`}
+              />
+              <textarea
+                value={v.description}
+                onChange={e => update(i, 'description', e.target.value)}
+                placeholder="Descripción del aspecto…"
+                rows={2}
+                className={`w-full border border-slate-200 rounded-lg px-3 py-1.5 text-xs text-slate-600 resize-none focus:outline-none focus:ring-2 ${titleBorder}`}
+              />
+            </div>
           </div>
         ))}
       </div>
@@ -64,8 +83,8 @@ function PostCompraTab() {
   const [previewRows, setPreviewRows] = useState(0)
   const [dragOver, setDragOver] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [positiveAspects, setPositiveAspects] = useState<string[]>(EMPTY_ASPECTS)
-  const [negativeAspects, setNegativeAspects] = useState<string[]>(EMPTY_ASPECTS)
+  const [positiveAspects, setPositiveAspects] = useState<Aspect[]>(EMPTY_ASPECTS)
+  const [negativeAspects, setNegativeAspects] = useState<Aspect[]>(EMPTY_ASPECTS)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const loadMonths = useCallback(async () => {
@@ -106,8 +125,8 @@ function PostCompraTab() {
   const handleConfirmUpload = async () => {
     if (!pendingData) return
     try {
-      const pos = positiveAspects.filter(v => v.trim())
-      const neg = negativeAspects.filter(v => v.trim())
+      const pos = positiveAspects.filter(a => a.title.trim())
+      const neg = negativeAspects.filter(a => a.title.trim())
       await upsertMonthData({
         ...pendingData,
         month: overrideMonth,
@@ -177,7 +196,7 @@ function PostCompraTab() {
           </div>
         )}
         {uploadState.status === 'success' && pendingData && (
-          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-4">
+          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-5">
             <div className="flex items-center gap-2 text-emerald-700 font-medium text-sm">
               <CheckCircle size={16} /> Archivo procesado correctamente
             </div>
@@ -215,8 +234,7 @@ function PostCompraTab() {
               )}
             </div>
 
-            {/* Aspectos */}
-            <div className="border-t border-emerald-200 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="border-t border-emerald-200 pt-4 grid grid-cols-1 md:grid-cols-2 gap-8">
               <AspectsInput
                 label="4 aspectos más mencionados — Positivos 🥰 (puntajes 7 a 10)"
                 values={positiveAspects}
@@ -297,8 +315,9 @@ function PostEntregaTab() {
   const [previewRows, setPreviewRows] = useState(0)
   const [dragOver, setDragOver] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
-  const [positiveAspects, setPositiveAspects] = useState<string[]>(EMPTY_ASPECTS)
-  const [negativeAspects, setNegativeAspects] = useState<string[]>(EMPTY_ASPECTS)
+  const [positiveAspects, setPositiveAspects] = useState<Aspect[]>(EMPTY_ASPECTS)
+  const [cesAspects, setCesAspects] = useState<Aspect[]>(EMPTY_ASPECTS)
+  const [npsNegativeAspects, setNpsNegativeAspects] = useState<Aspect[]>(EMPTY_ASPECTS)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const loadMonths = useCallback(async () => {
@@ -339,18 +358,20 @@ function PostEntregaTab() {
   const handleConfirmUpload = async () => {
     if (!pendingData) return
     try {
-      const pos = positiveAspects.filter(v => v.trim())
-      const neg = negativeAspects.filter(v => v.trim())
+      const pos = positiveAspects.filter(a => a.title.trim())
+      const ces = cesAspects.filter(a => a.title.trim())
+      const npsNeg = npsNegativeAspects.filter(a => a.title.trim())
       await upsertPostEntregaMonth({
         ...pendingData,
         month: overrideMonth,
         sent_count: parseInt(sentCount || '0', 10),
         positive_aspects: pos.length > 0 ? pos : undefined,
-        negative_aspects: neg.length > 0 ? neg : undefined,
+        negative_aspects: ces.length > 0 ? ces : undefined,
+        nps_negative_aspects: npsNeg.length > 0 ? npsNeg : undefined,
       })
       setUploadState({ status: 'idle' })
       setPendingData(null); setSelectedFile(null); setSentCount('')
-      setPositiveAspects(EMPTY_ASPECTS); setNegativeAspects(EMPTY_ASPECTS)
+      setPositiveAspects(EMPTY_ASPECTS); setCesAspects(EMPTY_ASPECTS); setNpsNegativeAspects(EMPTY_ASPECTS)
       if (fileRef.current) fileRef.current.value = ''
       await loadMonths()
     } catch {
@@ -360,7 +381,7 @@ function PostEntregaTab() {
 
   const handleCancel = () => {
     setUploadState({ status: 'idle' }); setPendingData(null); setSelectedFile(null)
-    setPositiveAspects(EMPTY_ASPECTS); setNegativeAspects(EMPTY_ASPECTS)
+    setPositiveAspects(EMPTY_ASPECTS); setCesAspects(EMPTY_ASPECTS); setNpsNegativeAspects(EMPTY_ASPECTS)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -413,7 +434,7 @@ function PostEntregaTab() {
           </div>
         )}
         {uploadState.status === 'success' && pendingData && (
-          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-4">
+          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-5">
             <div className="flex items-center gap-2 text-emerald-700 font-medium text-sm">
               <CheckCircle size={16} /> Archivo procesado correctamente
             </div>
@@ -455,18 +476,42 @@ function PostEntregaTab() {
               )}
             </div>
 
-            {/* Aspectos */}
-            <div className="border-t border-emerald-200 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Aspectos positivos generales */}
+            <div className="border-t border-emerald-200 pt-4">
               <AspectsInput
                 label="4 aspectos más mencionados — Positivos 🥰 (puntajes 7 a 10)"
                 values={positiveAspects}
                 onChange={setPositiveAspects}
                 color="emerald"
               />
+            </div>
+
+            {/* Aspectos negativos col C — seguimiento del pedido */}
+            <div className="border-t border-emerald-200 pt-4">
+              <div className="flex items-center justify-between mb-3">
+                <p className="text-xs font-semibold text-slate-600">
+                  4 aspectos más mencionados — Negativos 🤬 seguimiento de pedido (col C)
+                </p>
+                {pendingData.ces_comments && pendingData.ces_comments.length > 0 && (
+                  <span className="text-xs text-slate-400">
+                    {pendingData.ces_comments.length} comentarios capturados de col C
+                  </span>
+                )}
+              </div>
               <AspectsInput
-                label="4 aspectos más mencionados — Negativos 🤬 sobre seguimiento del pedido"
-                values={negativeAspects}
-                onChange={setNegativeAspects}
+                label=""
+                values={cesAspects}
+                onChange={setCesAspects}
+                color="red"
+              />
+            </div>
+
+            {/* Motivos de detracción NPS */}
+            <div className="border-t border-emerald-200 pt-4">
+              <AspectsInput
+                label="4 motivos de detracción NPS 🤬 (puntajes 0 a 6)"
+                values={npsNegativeAspects}
+                onChange={setNpsNegativeAspects}
                 color="red"
               />
             </div>

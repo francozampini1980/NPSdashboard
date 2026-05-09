@@ -93,11 +93,12 @@ export function parsePostEntregaCSV(
   const csatPredisposicion = calcMetric(dataRows.map(r => Number(r[COL.csat_predisposicion])))
   const csatCondicion = calcMetric(dataRows.map(r => Number(r[COL.csat_condicion])))
 
+  const cesComments: string[] = []
   const openComments: string[] = []
   dataRows.forEach(row => {
     const colC = row[2]?.trim()
     const colD = row[3]?.trim()
-    if (colC && colC.length > 2) openComments.push(colC)
+    if (colC && colC.length > 2) cesComments.push(colC)
     if (colD && colD.length > 2) openComments.push(colD)
   })
 
@@ -127,6 +128,7 @@ export function parsePostEntregaCSV(
     csat_condicion_regular_pct: csatCondicion.regular_pct,
     csat_condicion_bad_pct: csatCondicion.bad_pct,
     open_comments: openComments,
+    ces_comments: cesComments,
   }
 
   return { data, detectedMonth, rowCount: total }

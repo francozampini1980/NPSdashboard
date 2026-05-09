@@ -7,6 +7,11 @@ export interface BaseNPSDataPoint {
   detractors_count: number
 }
 
+export interface Aspect {
+  title: string
+  description: string
+}
+
 export interface PostEntregaMonthlyData {
   id?: string
   month: string
@@ -34,8 +39,10 @@ export interface PostEntregaMonthlyData {
   csat_condicion_regular_pct: number
   csat_condicion_bad_pct: number
   open_comments?: string[]
-  positive_aspects?: string[]
-  negative_aspects?: string[]
+  ces_comments?: string[]
+  positive_aspects?: Aspect[]
+  negative_aspects?: Aspect[]
+  nps_negative_aspects?: Aspect[]
   created_at?: string
   updated_at?: string
 }
@@ -54,8 +61,8 @@ export interface MonthlyNPSData {
   promotion_reasons: Record<string, number>
   detraction_reasons: Record<string, number>
   open_comments?: string[]
-  positive_aspects?: string[]
-  negative_aspects?: string[]
+  positive_aspects?: Aspect[]
+  negative_aspects?: Aspect[]
   created_at?: string
   updated_at?: string
 }

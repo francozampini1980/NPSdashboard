@@ -11,7 +11,7 @@ import MetricScoreCard from '@/components/charts/MetricScoreCard'
 import EvolutiveNPS from '@/components/charts/EvolutiveNPS'
 import EvolutivePromoters from '@/components/charts/EvolutivePromoters'
 import EvolutiveMetric from '@/components/charts/EvolutiveMetric'
-import CommentHighlights from '@/components/charts/CommentHighlights'
+import CommentHighlights, { CESAspectsCard, AspectsCard } from '@/components/charts/CommentHighlights'
 
 const MONTHS_PER_PAGE = 6
 
@@ -158,9 +158,17 @@ export default function NPSPostEntregaPage() {
 
               <CommentHighlights
                 positiveAspects={currentData.positive_aspects}
-                negativeAspects={currentData.negative_aspects}
                 openComments={currentData.open_comments}
-                negativeLabel="Aspectos negativos 🤬 — Seguimiento del pedido"
+                commentsLabel="comentarios finales"
+              />
+              <CESAspectsCard
+                aspects={currentData.negative_aspects}
+                cesComments={currentData.ces_comments}
+              />
+              <AspectsCard
+                title="Motivos de detracción NPS 🤬"
+                aspects={currentData.nps_negative_aspects}
+                aspectListLabel="Principales motivos de detracción (puntajes 0 a 6)"
               />
 
               {/* Section: CSAT */}
