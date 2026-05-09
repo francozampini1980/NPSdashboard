@@ -11,7 +11,7 @@ import MetricScoreCard from '@/components/charts/MetricScoreCard'
 import EvolutiveNPS from '@/components/charts/EvolutiveNPS'
 import EvolutivePromoters from '@/components/charts/EvolutivePromoters'
 import EvolutiveMetric from '@/components/charts/EvolutiveMetric'
-import CommentAnalysisPanel from '@/components/charts/CommentAnalysisPanel'
+import CommentHighlights from '@/components/charts/CommentHighlights'
 
 const MONTHS_PER_PAGE = 6
 
@@ -156,11 +156,11 @@ export default function NPSPostEntregaPage() {
                 />
               </div>
 
-              {/* Análisis IA */}
-              <CommentAnalysisPanel
-                surveyType="nps_entrega"
-                month={currentData.month}
-                totalComments={currentData.open_comments?.length ?? 0}
+              <CommentHighlights
+                positiveAspects={currentData.positive_aspects}
+                negativeAspects={currentData.negative_aspects}
+                openComments={currentData.open_comments}
+                negativeLabel="Aspectos negativos 🤬 — Seguimiento del pedido"
               />
 
               {/* Section: CSAT */}

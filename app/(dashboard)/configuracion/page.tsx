@@ -13,6 +13,45 @@ interface UploadState {
   message?: string
 }
 
+const EMPTY_ASPECTS = ['', '', '', '']
+
+function AspectsInput({
+  label,
+  values,
+  onChange,
+  color,
+}: {
+  label: string
+  values: string[]
+  onChange: (vals: string[]) => void
+  color: 'emerald' | 'red'
+}) {
+  const borderClass = color === 'emerald' ? 'focus:ring-emerald-400/30 focus:border-emerald-400' : 'focus:ring-red-400/30 focus:border-red-400'
+  return (
+    <div>
+      <p className="text-xs font-semibold text-slate-600 mb-2">{label}</p>
+      <div className="space-y-2">
+        {values.map((v, i) => (
+          <div key={i} className="flex items-center gap-2">
+            <span className="text-xs text-slate-400 w-4 shrink-0">{i + 1}.</span>
+            <input
+              type="text"
+              value={v}
+              onChange={e => {
+                const next = [...values]
+                next[i] = e.target.value
+                onChange(next)
+              }}
+              placeholder={`Aspecto ${i + 1}…`}
+              className={`flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 ${borderClass}`}
+            />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
 // ─── Post Compra Tab ──────────────────────────────────────────────────────────
 
 function PostCompraTab() {
@@ -25,6 +64,8 @@ function PostCompraTab() {
   const [previewRows, setPreviewRows] = useState(0)
   const [dragOver, setDragOver] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [positiveAspects, setPositiveAspects] = useState<string[]>(EMPTY_ASPECTS)
+  const [negativeAspects, setNegativeAspects] = useState<string[]>(EMPTY_ASPECTS)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const loadMonths = useCallback(async () => {
@@ -65,9 +106,18 @@ function PostCompraTab() {
   const handleConfirmUpload = async () => {
     if (!pendingData) return
     try {
-      await upsertMonthData({ ...pendingData, month: overrideMonth, impressions: parseInt(impressions || '0', 10) })
+      const pos = positiveAspects.filter(v => v.trim())
+      const neg = negativeAspects.filter(v => v.trim())
+      await upsertMonthData({
+        ...pendingData,
+        month: overrideMonth,
+        impressions: parseInt(impressions || '0', 10),
+        positive_aspects: pos.length > 0 ? pos : undefined,
+        negative_aspects: neg.length > 0 ? neg : undefined,
+      })
       setUploadState({ status: 'idle' })
       setPendingData(null); setSelectedFile(null); setImpressions('')
+      setPositiveAspects(EMPTY_ASPECTS); setNegativeAspects(EMPTY_ASPECTS)
       if (fileRef.current) fileRef.current.value = ''
       await loadMonths()
     } catch {
@@ -77,6 +127,7 @@ function PostCompraTab() {
 
   const handleCancel = () => {
     setUploadState({ status: 'idle' }); setPendingData(null); setSelectedFile(null)
+    setPositiveAspects(EMPTY_ASPECTS); setNegativeAspects(EMPTY_ASPECTS)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -126,11 +177,12 @@ function PostCompraTab() {
           </div>
         )}
         {uploadState.status === 'success' && pendingData && (
-          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-emerald-700 font-medium text-sm mb-3">
+          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-4">
+            <div className="flex items-center gap-2 text-emerald-700 font-medium text-sm">
               <CheckCircle size={16} /> Archivo procesado correctamente
             </div>
-            <div className="grid grid-cols-3 gap-3 mb-4">
+
+            <div className="grid grid-cols-3 gap-3">
               <div className="bg-white rounded-lg p-3 border border-emerald-100">
                 <p className="text-xs text-slate-500">Respuestas</p>
                 <p className="text-lg font-bold text-slate-800">{previewRows}</p>
@@ -146,7 +198,8 @@ function PostCompraTab() {
                 <p className="text-sm font-bold text-slate-800">{overrideMonth ? formatMonthLabelFull(overrideMonth) : '—'}</p>
               </div>
             </div>
-            <div className="mb-4">
+
+            <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
                 Mes al que corresponde <span className="text-slate-400">(podés corregirlo)</span>
               </label>
@@ -161,6 +214,23 @@ function PostCompraTab() {
                 </p>
               )}
             </div>
+
+            {/* Aspectos */}
+            <div className="border-t border-emerald-200 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <AspectsInput
+                label="4 aspectos más mencionados — Positivos 🥰 (puntajes 7 a 10)"
+                values={positiveAspects}
+                onChange={setPositiveAspects}
+                color="emerald"
+              />
+              <AspectsInput
+                label="4 aspectos más mencionados — Negativos y neutros 🤬🤨 (puntajes 0 a 6)"
+                values={negativeAspects}
+                onChange={setNegativeAspects}
+                color="red"
+              />
+            </div>
+
             <div className="flex gap-2">
               <button onClick={handleConfirmUpload} disabled={!overrideMonth}
                 className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition">
@@ -196,6 +266,7 @@ function PostCompraTab() {
                     <p className="text-sm font-medium text-slate-700">{formatMonthLabelFull(m.month)}</p>
                     <p className="text-xs text-slate-400">
                       {m.total_responses.toLocaleString('es')} respuestas · NPS {m.nps_score > 0 ? `+${m.nps_score}` : m.nps_score}
+                      {m.positive_aspects && m.positive_aspects.length > 0 && ' · aspectos cargados ✓'}
                     </p>
                   </div>
                 </div>
@@ -226,6 +297,8 @@ function PostEntregaTab() {
   const [previewRows, setPreviewRows] = useState(0)
   const [dragOver, setDragOver] = useState(false)
   const [selectedFile, setSelectedFile] = useState<File | null>(null)
+  const [positiveAspects, setPositiveAspects] = useState<string[]>(EMPTY_ASPECTS)
+  const [negativeAspects, setNegativeAspects] = useState<string[]>(EMPTY_ASPECTS)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const loadMonths = useCallback(async () => {
@@ -266,13 +339,18 @@ function PostEntregaTab() {
   const handleConfirmUpload = async () => {
     if (!pendingData) return
     try {
+      const pos = positiveAspects.filter(v => v.trim())
+      const neg = negativeAspects.filter(v => v.trim())
       await upsertPostEntregaMonth({
         ...pendingData,
         month: overrideMonth,
         sent_count: parseInt(sentCount || '0', 10),
+        positive_aspects: pos.length > 0 ? pos : undefined,
+        negative_aspects: neg.length > 0 ? neg : undefined,
       })
       setUploadState({ status: 'idle' })
       setPendingData(null); setSelectedFile(null); setSentCount('')
+      setPositiveAspects(EMPTY_ASPECTS); setNegativeAspects(EMPTY_ASPECTS)
       if (fileRef.current) fileRef.current.value = ''
       await loadMonths()
     } catch {
@@ -282,6 +360,7 @@ function PostEntregaTab() {
 
   const handleCancel = () => {
     setUploadState({ status: 'idle' }); setPendingData(null); setSelectedFile(null)
+    setPositiveAspects(EMPTY_ASPECTS); setNegativeAspects(EMPTY_ASPECTS)
     if (fileRef.current) fileRef.current.value = ''
   }
 
@@ -317,7 +396,7 @@ function PostEntregaTab() {
             {selectedFile ? selectedFile.name : 'Arrastrá tu CSV acá o hacé click para seleccionar'}
           </p>
           <p className="text-xs text-slate-400 mt-1">
-            Columnas: A=NPS · B=CES · E=CSAT Puntualidad · F=CSAT Predisposición · G=CSAT Condición · H=Fecha
+            Columnas: A=NPS · B=CES · C=Motivo neg. seguimiento · D=Comentarios · E=CSAT Puntualidad · F=CSAT Predisposición · G=CSAT Condición · H=Fecha
           </p>
           <input ref={fileRef} type="file" accept=".csv" className="hidden"
             onChange={e => { const f = e.target.files?.[0]; if (f) processFile(f) }} />
@@ -334,11 +413,12 @@ function PostEntregaTab() {
           </div>
         )}
         {uploadState.status === 'success' && pendingData && (
-          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4">
-            <div className="flex items-center gap-2 text-emerald-700 font-medium text-sm mb-3">
+          <div className="mt-4 bg-emerald-50 border border-emerald-200 rounded-xl p-4 space-y-4">
+            <div className="flex items-center gap-2 text-emerald-700 font-medium text-sm">
               <CheckCircle size={16} /> Archivo procesado correctamente
             </div>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <div className="bg-white rounded-lg p-3 border border-emerald-100">
                 <p className="text-xs text-slate-500">Respuestas</p>
                 <p className="text-lg font-bold text-slate-800">{previewRows}</p>
@@ -358,7 +438,8 @@ function PostEntregaTab() {
                 <p className="text-sm font-bold text-slate-800">{overrideMonth ? formatMonthLabelFull(overrideMonth) : '—'}</p>
               </div>
             </div>
-            <div className="mb-4">
+
+            <div>
               <label className="block text-xs font-medium text-slate-600 mb-1">
                 Mes al que corresponde <span className="text-slate-400">(podés corregirlo)</span>
               </label>
@@ -373,6 +454,23 @@ function PostEntregaTab() {
                 </p>
               )}
             </div>
+
+            {/* Aspectos */}
+            <div className="border-t border-emerald-200 pt-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+              <AspectsInput
+                label="4 aspectos más mencionados — Positivos 🥰 (puntajes 7 a 10)"
+                values={positiveAspects}
+                onChange={setPositiveAspects}
+                color="emerald"
+              />
+              <AspectsInput
+                label="4 aspectos más mencionados — Negativos 🤬 sobre seguimiento del pedido"
+                values={negativeAspects}
+                onChange={setNegativeAspects}
+                color="red"
+              />
+            </div>
+
             <div className="flex gap-2">
               <button onClick={handleConfirmUpload} disabled={!overrideMonth}
                 className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg hover:bg-blue-700 disabled:opacity-50 transition">
@@ -408,6 +506,7 @@ function PostEntregaTab() {
                     <p className="text-sm font-medium text-slate-700">{formatMonthLabelFull(m.month)}</p>
                     <p className="text-xs text-slate-400">
                       {m.total_responses.toLocaleString('es')} respuestas · NPS {m.nps_score > 0 ? `+${m.nps_score}` : m.nps_score} · CES {m.ces_score.toFixed(1)}
+                      {m.positive_aspects && m.positive_aspects.length > 0 && ' · aspectos cargados ✓'}
                     </p>
                   </div>
                 </div>
@@ -438,7 +537,6 @@ export default function ConfiguracionPage() {
         <p className="text-slate-500 text-sm mt-1">Cargá y gestioná los archivos CSV mensuales</p>
       </div>
 
-      {/* Tab switcher */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-fit mb-6">
         {([
           ['post-compra', 'NPS Post Compra'],

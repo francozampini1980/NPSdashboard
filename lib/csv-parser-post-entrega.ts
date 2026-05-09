@@ -93,9 +93,13 @@ export function parsePostEntregaCSV(
   const csatPredisposicion = calcMetric(dataRows.map(r => Number(r[COL.csat_predisposicion])))
   const csatCondicion = calcMetric(dataRows.map(r => Number(r[COL.csat_condicion])))
 
-  const openComments = dataRows
-    .map(row => row[3]?.trim())
-    .filter((v): v is string => !!v && v.length > 2)
+  const openComments: string[] = []
+  dataRows.forEach(row => {
+    const colC = row[2]?.trim()
+    const colD = row[3]?.trim()
+    if (colC && colC.length > 2) openComments.push(colC)
+    if (colD && colD.length > 2) openComments.push(colD)
+  })
 
   const data: PostEntregaMonthlyData = {
     month: detectedMonth,
