@@ -10,7 +10,6 @@ interface Props {
   openComments?: string[]
   positiveLabel?: string
   negativeLabel?: string
-  commentsLabel?: string
 }
 
 export default function CommentHighlights({
@@ -19,7 +18,6 @@ export default function CommentHighlights({
   openComments,
   positiveLabel = 'Calificaciones positivas 🥰',
   negativeLabel = 'Calificaciones negativas y neutras 🤬',
-  commentsLabel = 'comentarios',
 }: Props) {
   const [modalOpen, setModalOpen] = useState(false)
 
@@ -43,7 +41,7 @@ export default function CommentHighlights({
               className="flex items-center gap-1.5 text-xs text-blue-600 hover:text-blue-800 font-medium transition-colors"
             >
               <MessageSquareText size={13} />
-              Ver todos los {commentsLabel} ({openComments.length})
+              Ver todos los comentarios ({openComments.length})
             </button>
           )}
         </div>
@@ -68,7 +66,7 @@ export default function CommentHighlights({
 
       {modalOpen && (
         <CommentsModal
-          title={`Todos los ${commentsLabel}`}
+          title="Todos los comentarios"
           comments={openComments ?? []}
           onClose={() => setModalOpen(false)}
         />
