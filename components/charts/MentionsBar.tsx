@@ -73,12 +73,16 @@ export default function MentionsBar({ reasons, groupTotal, type, title }: Props)
                 {topic}
               </td>
               <td className="py-1.5 pl-1 text-center w-16">
-                <span
-                  className={`inline-block w-full rounded px-2 py-1 tabular-nums ${getRankStyle(rank, pct, type)}`}
-                  title={`${count} respuestas`}
-                >
-                  {pct > 0 ? `${pct}%` : '—'}
-                </span>
+                <div className="relative inline-block w-full group/cell">
+                  <span className={`inline-block w-full rounded px-2 py-1 tabular-nums ${getRankStyle(rank, pct, type)}`}>
+                    {pct > 0 ? `${pct}%` : '—'}
+                  </span>
+                  {count > 0 && (
+                    <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-slate-800 text-white rounded whitespace-nowrap opacity-0 group-hover/cell:opacity-100 pointer-events-none transition-opacity z-10">
+                      {count} respuestas
+                    </div>
+                  )}
+                </div>
               </td>
             </tr>
           ))}
