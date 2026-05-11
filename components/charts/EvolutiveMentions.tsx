@@ -112,12 +112,16 @@ export default function EvolutiveMentions({ data, type }: Props) {
                 </td>
                 {cells.map(({ pct, count, month }, colIdx) => (
                   <td key={month} className="py-1.5 px-1 text-center">
-                    <span
-                      className={`inline-block w-full rounded px-1 py-1 tabular-nums ${getRankStyle(columnRanks[colIdx][rowIdx], pct, type)}`}
-                      title={`${count} resp.`}
-                    >
-                      {pct > 0 ? `${pct}%` : '—'}
-                    </span>
+                    <div className="relative inline-block w-full group/cell">
+                      <span className={`inline-block w-full rounded px-1 py-1 tabular-nums ${getRankStyle(columnRanks[colIdx][rowIdx], pct, type)}`}>
+                        {pct > 0 ? `${pct}%` : '—'}
+                      </span>
+                      {count > 0 && (
+                        <div className="absolute bottom-full left-1/2 -translate-x-1/2 mb-1.5 px-2 py-1 bg-slate-800 text-white text-xs rounded whitespace-nowrap opacity-0 group-hover/cell:opacity-100 pointer-events-none transition-opacity z-10">
+                          {count} respuestas
+                        </div>
+                      )}
+                    </div>
                   </td>
                 ))}
               </tr>
