@@ -182,6 +182,15 @@ export default function PostEntregaTab() {
             </div>
 
             <div className="border-t border-emerald-200 pt-4">
+              <AspectsInput
+                label="4 motivos de detracción NPS 🤬 (puntajes 0 a 6)"
+                values={npsNegativeAspects}
+                onChange={setNpsNegativeAspects}
+                color="red"
+              />
+            </div>
+
+            <div className="border-t border-emerald-200 pt-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-semibold text-slate-600">
                   4 aspectos más mencionados — Negativos 🤬 seguimiento de pedido (col C)
@@ -193,15 +202,6 @@ export default function PostEntregaTab() {
                 )}
               </div>
               <AspectsInput label="" values={cesAspects} onChange={setCesAspects} color="red" />
-            </div>
-
-            <div className="border-t border-emerald-200 pt-4">
-              <AspectsInput
-                label="4 motivos de detracción NPS 🤬 (puntajes 0 a 6)"
-                values={npsNegativeAspects}
-                onChange={setNpsNegativeAspects}
-                color="red"
-              />
             </div>
 
             <div className="flex gap-2">
