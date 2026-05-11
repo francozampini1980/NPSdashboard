@@ -6,10 +6,12 @@ import { getAllMonths, upsertMonthData, deleteMonthData } from '@/lib/storage'
 import { parseCSV } from '@/lib/csv-parser'
 import { MonthlyNPSData, Aspect, formatMonthLabelFull } from '@/types'
 import { AspectsInput, EMPTY_ASPECTS, UploadState } from './shared'
+import { getErrorMessage, toInt } from '@/lib/utils'
 
 export default function PostCompraTab() {
   const [months, setMonths] = useState<MonthlyNPSData[]>([])
   const [loading, setLoading] = useState(true)
+  const [loadError, setLoadError] = useState<string | null>(null)
   const [uploadState, setUploadState] = useState<UploadState>({ status: 'idle' })
   const [pendingData, setPendingData] = useState<MonthlyNPSData | null>(null)
   const [impressions, setImpressions] = useState('')
@@ -23,9 +25,12 @@ export default function PostCompraTab() {
 
   const loadMonths = useCallback(async () => {
     setLoading(true)
+    setLoadError(null)
     try {
       const data = await getAllMonths()
       setMonths(data.filter(d => d.survey_type === 'post_purchase').sort((a, b) => b.month.localeCompare(a.month)))
+    } catch (err) {
+      setLoadError(getErrorMessage(err, 'No se pudo cargar la lista de meses.'))
     } finally {
       setLoading(false)
     }
@@ -39,13 +44,13 @@ export default function PostCompraTab() {
     setPendingData(null)
     try {
       const text = await file.text()
-      const { data, detectedMonth, rowCount } = parseCSV(text, parseInt(impressions || '0', 10))
+      const { data, detectedMonth, rowCount } = parseCSV(text, toInt(impressions))
       setPendingData(data)
       setOverrideMonth(detectedMonth)
       setPreviewRows(rowCount)
       setUploadState({ status: 'success' })
     } catch (err) {
-      setUploadState({ status: 'error', message: err instanceof Error ? err.message : 'Error al procesar el archivo.' })
+      setUploadState({ status: 'error', message: getErrorMessage(err, 'Error al procesar el archivo.') })
     }
   }, [impressions])
 
@@ -66,15 +71,15 @@ export default function PostCompraTab() {
       await upsertMonthData({
         ...pendingData,
         month: overrideMonth,
-        impressions: parseInt(impressions || '0', 10),
+        impressions: toInt(impressions),
         positive_aspects: pos.length > 0 ? pos : undefined,
         negative_aspects: neg.length > 0 ? neg : undefined,
       })
       reset()
       setImpressions('')
       await loadMonths()
-    } catch {
-      setUploadState({ status: 'error', message: 'Error al guardar los datos.' })
+    } catch (err) {
+      setUploadState({ status: 'error', message: getErrorMessage(err, 'Error al guardar los datos.') })
     }
   }
 
@@ -193,6 +198,11 @@ export default function PostCompraTab() {
         <h3 className="text-base font-semibold text-slate-700 mb-4">
           Meses cargados <span className="text-slate-400 font-normal">({months.length})</span>
         </h3>
+        {loadError && (
+          <div className="flex items-start gap-2 text-red-600 text-sm bg-red-50 rounded-lg p-3 mb-2">
+            <AlertCircle size={15} className="shrink-0 mt-0.5" /> {loadError}
+          </div>
+        )}
         {loading ? (
           <p className="text-slate-400 text-sm">Cargando...</p>
         ) : months.length === 0 ? (
@@ -217,8 +227,12 @@ export default function PostCompraTab() {
                 <button
                   onClick={async () => {
                     if (!confirm(`¿Eliminar los datos de ${formatMonthLabelFull(m.month)}?`)) return
-                    await deleteMonthData(m.month)
-                    await loadMonths()
+                    try {
+                      await deleteMonthData(m.month)
+                      await loadMonths()
+                    } catch (err) {
+                      setLoadError(getErrorMessage(err, 'Error al eliminar el mes.'))
+                    }
                   }}
                   className="p-1.5 text-slate-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition"
                 >

@@ -5,6 +5,7 @@ import { ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
 import { getAllPostEntregaMonths } from '@/lib/storage-post-entrega'
 import { useEvolutivePage } from '@/lib/hooks/useEvolutivePage'
 import { PostEntregaMonthlyData, formatMonthLabelFull } from '@/types'
+import { getErrorMessage } from '@/lib/utils'
 import NPSScoreCard from '@/components/charts/NPSScoreCard'
 import PromoterDonut from '@/components/charts/PromoterDonut'
 import ScoreDistribution from '@/components/charts/ScoreDistribution'
@@ -18,6 +19,7 @@ export default function NPSPostEntregaPage() {
   const [activeTab, setActiveTab] = useState<'mes-actual' | 'evolutivo'>('evolutivo')
   const [allMonths, setAllMonths] = useState<PostEntregaMonthlyData[]>([])
   const [loading, setLoading] = useState(true)
+  const [fetchError, setFetchError] = useState<string | null>(null)
 
   const {
     selectedMonth, setSelectedMonth,
@@ -29,12 +31,19 @@ export default function NPSPostEntregaPage() {
   useEffect(() => {
     let cancelled = false
     setLoading(true)
-    getAllPostEntregaMonths().then(data => {
-      if (cancelled) return
-      setAllMonths(data)
-      initFromData(data)
-      setLoading(false)
-    }).catch(() => setLoading(false))
+    setFetchError(null)
+    getAllPostEntregaMonths()
+      .then(data => {
+        if (cancelled) return
+        setAllMonths(data)
+        initFromData(data)
+        setLoading(false)
+      })
+      .catch(err => {
+        if (cancelled) return
+        setFetchError(getErrorMessage(err, 'No se pudieron cargar los datos. Revisá tu conexión e intentá de nuevo.'))
+        setLoading(false)
+      })
     return () => { cancelled = true }
   }, [])
 
@@ -71,8 +80,19 @@ export default function NPSPostEntregaPage() {
         ))}
       </div>
 
+      {/* Error de carga */}
+      {fetchError && (
+        <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 text-red-700">
+          <AlertCircle size={20} className="shrink-0 mt-0.5" />
+          <div>
+            <p className="font-medium text-sm">Error al cargar los datos</p>
+            <p className="text-sm mt-0.5">{fetchError}</p>
+          </div>
+        </div>
+      )}
+
       {/* No data */}
-      {allMonths.length === 0 && (
+      {!fetchError && allMonths.length === 0 && (
         <div className="flex items-start gap-3 bg-amber-50 border border-amber-200 rounded-xl p-4 text-amber-700">
           <AlertCircle size={20} className="shrink-0 mt-0.5" />
           <div>
@@ -86,7 +106,7 @@ export default function NPSPostEntregaPage() {
       )}
 
       {/* ── MES ACTUAL ── */}
-      {activeTab === 'mes-actual' && allMonths.length > 0 && (
+      {!fetchError && activeTab === 'mes-actual' && allMonths.length > 0 && (
         <div>
           {/* Month selector */}
           <div className="flex items-center gap-3 mb-6">
@@ -198,7 +218,7 @@ export default function NPSPostEntregaPage() {
       )}
 
       {/* ── EVOLUTIVO ── */}
-      {activeTab === 'evolutivo' && allMonths.length > 0 && (
+      {!fetchError && activeTab === 'evolutivo' && allMonths.length > 0 && (
         <div>
           {/* Pagination */}
           <div className="flex items-center justify-between mb-6">

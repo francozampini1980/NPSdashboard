@@ -38,10 +38,10 @@ function calcMetric(values: number[]): {
   const regular_pct = (valid.filter(v => v === 3).length / valid.length) * 100
   const bad_pct = (valid.filter(v => v <= 2).length / valid.length) * 100
   return {
-    score: parseFloat(score.toFixed(2)),
-    good_pct: parseFloat(good_pct.toFixed(1)),
-    regular_pct: parseFloat(regular_pct.toFixed(1)),
-    bad_pct: parseFloat(bad_pct.toFixed(1)),
+    score: Math.round(score * 100) / 100,
+    good_pct: Math.round(good_pct * 10) / 10,
+    regular_pct: Math.round(regular_pct * 10) / 10,
+    bad_pct: Math.round(bad_pct * 10) / 10,
   }
 }
 
