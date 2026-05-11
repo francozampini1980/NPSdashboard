@@ -1,7 +1,5 @@
 'use client'
 
-import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, Legend } from 'recharts'
-
 interface Props {
   promoters: number
   neutrals: number
@@ -9,68 +7,53 @@ interface Props {
   total: number
 }
 
-const COLORS = {
-  Promotores: '#10B981',
-  Neutros: '#F59E0B',
-  Detractores: '#EF4444',
-}
+const SEGMENTS = [
+  { key: 'promoters' as const, label: 'Promotores', bg: 'bg-emerald-500', text: 'text-emerald-600' },
+  { key: 'neutrals'  as const, label: 'Neutros',    bg: 'bg-amber-400',   text: 'text-amber-600'  },
+  { key: 'detractors'as const, label: 'Detractores',bg: 'bg-red-500',     text: 'text-red-600'    },
+]
 
 export default function PromoterDonut({ promoters, neutrals, detractors, total }: Props) {
-  const data = [
-    { name: 'Promotores', value: promoters, pct: total > 0 ? Math.round((promoters / total) * 100) : 0 },
-    { name: 'Neutros', value: neutrals, pct: total > 0 ? Math.round((neutrals / total) * 100) : 0 },
-    { name: 'Detractores', value: detractors, pct: total > 0 ? Math.round((detractors / total) * 100) : 0 },
-  ]
-
-  const renderCustomLabel = ({ cx, cy, midAngle, innerRadius, outerRadius, pct }: {
-    cx: number; cy: number; midAngle: number; innerRadius: number; outerRadius: number; pct: number
-  }) => {
-    if (pct < 5) return null
-    const RADIAN = Math.PI / 180
-    const radius = innerRadius + (outerRadius - innerRadius) * 0.5
-    const x = cx + radius * Math.cos(-midAngle * RADIAN)
-    const y = cy + radius * Math.sin(-midAngle * RADIAN)
-    return (
-      <text x={x} y={y} fill="white" textAnchor="middle" dominantBaseline="central" fontSize={12} fontWeight="bold">
-        {`${pct}%`}
-      </text>
-    )
-  }
+  const counts = { promoters, neutrals, detractors }
+  const segments = SEGMENTS.map(s => ({
+    ...s,
+    count: counts[s.key],
+    pct: total > 0 ? Math.round((counts[s.key] / total) * 100) : 0,
+  }))
 
   return (
-    <div className="bg-white rounded-xl border border-slate-200 p-5">
-      <h3 className="text-sm font-semibold text-slate-700 mb-4">Promotores · Neutros · Detractores</h3>
-      <ResponsiveContainer width="100%" height={220}>
-        <PieChart>
-          <Pie
-            data={data}
-            cx="50%"
-            cy="50%"
-            innerRadius={55}
-            outerRadius={85}
-            paddingAngle={2}
-            dataKey="value"
-            labelLine={false}
-            label={renderCustomLabel as never}
+    <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-5">
+      <h3 className="text-sm font-semibold text-slate-700">Promotores · Neutros · Detractores</h3>
+
+      {/* Barra apilada horizontal */}
+      <div className="flex h-10 rounded-xl overflow-hidden gap-px bg-slate-100">
+        {segments.map(({ label, count, pct, bg }) => pct > 0 && (
+          <div
+            key={label}
+            className={`${bg} flex items-center justify-center transition-all`}
+            style={{ width: `${pct}%` }}
+            title={`${label}: ${count} resp. (${pct}%)`}
           >
-            {data.map(entry => (
-              <Cell key={entry.name} fill={COLORS[entry.name as keyof typeof COLORS]} />
-            ))}
-          </Pie>
-          <Tooltip
-            formatter={(value, name) => {
-              const item = data.find(d => d.name === name)
-              return [`${value} (${item?.pct ?? 0}%)`, String(name)]
-            }}
-          />
-          <Legend
-            formatter={(value, entry) => {
-              const item = data.find(d => d.name === value)
-              return <span className="text-xs text-slate-600">{value}: {item?.pct ?? 0}%</span>
-            }}
-          />
-        </PieChart>
-      </ResponsiveContainer>
+            {pct >= 8 && (
+              <span className="text-white text-xs font-bold drop-shadow-sm">{pct}%</span>
+            )}
+          </div>
+        ))}
+      </div>
+
+      {/* Leyenda con valores */}
+      <div className="flex items-start justify-around">
+        {segments.map(({ label, count, pct, bg, text }) => (
+          <div key={label} className="flex flex-col items-center gap-1">
+            <div className="flex items-center gap-1.5">
+              <span className={`w-2.5 h-2.5 rounded-sm ${bg}`} />
+              <span className="text-xs text-slate-500">{label}</span>
+            </div>
+            <span className={`text-2xl font-bold ${text}`}>{pct}%</span>
+            <span className="text-xs text-slate-400">{count.toLocaleString('es-AR')} resp.</span>
+          </div>
+        ))}
+      </div>
     </div>
   )
 }
