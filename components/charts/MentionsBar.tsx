@@ -1,6 +1,5 @@
 'use client'
 
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts'
 import { POSITIVE_TOPICS, NEGATIVE_TOPICS } from '@/types'
 
 interface Props {
@@ -10,32 +9,42 @@ interface Props {
   title: string
 }
 
+function getRankStyle(rank: number, pct: number, type: 'positive' | 'negative'): string {
+  if (pct === 0) return 'bg-slate-50 text-slate-300'
+  if (rank === 0) return 'bg-slate-100 text-slate-500'
+  if (type === 'positive') {
+    if (rank === 1) return 'bg-emerald-700 text-white font-bold'
+    if (rank === 2) return 'bg-emerald-500 text-white font-semibold'
+    return 'bg-emerald-200 text-emerald-900 font-medium'
+  } else {
+    if (rank === 1) return 'bg-red-700 text-white font-bold'
+    if (rank === 2) return 'bg-red-500 text-white font-semibold'
+    return 'bg-red-200 text-red-900 font-medium'
+  }
+}
+
 export default function MentionsBar({ reasons, groupTotal, type, title }: Props) {
   const allowedTopics: readonly string[] = type === 'positive' ? POSITIVE_TOPICS : NEGATIVE_TOPICS
 
-  const data = Object.entries(reasons)
-    // Only show predefined topics — never display free-text or unknown categories
-    .filter(([name]) => allowedTopics.includes(name))
-    .map(([name, count]) => ({
-      name: name.length > 32 ? name.slice(0, 30) + '…' : name,
-      fullName: name,
-      count,
-      // % independent per category: how many in the group selected this reason
-      pct: groupTotal > 0 ? Math.round((count / groupTotal) * 100) : 0,
-    }))
-    .sort((a, b) => b.count - a.count)
-    .filter(d => d.count > 0)
+  const rows = allowedTopics
+    .map(topic => {
+      const count = reasons[topic] ?? 0
+      const pct = groupTotal > 0 ? Math.round((count / groupTotal) * 100) : 0
+      return { topic, count, pct }
+    })
+    .filter(r => r.count > 0)
+    .sort((a, b) => b.pct - a.pct)
+    .map((r, i) => ({ ...r, rank: i < 3 ? i + 1 : 0 }))
 
-  const color = type === 'positive' ? '#10B981' : '#EF4444'
-  const emptyColor = type === 'positive' ? '#D1FAE5' : '#FEE2E2'
+  const rankColor = type === 'positive'
+    ? ['bg-emerald-700', 'bg-emerald-500', 'bg-emerald-200']
+    : ['bg-red-700', 'bg-red-500', 'bg-red-200']
 
-  if (data.length === 0) {
+  if (rows.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-slate-200 p-5">
         <h3 className="text-sm font-semibold text-slate-700 mb-2">{title}</h3>
-        <div className="h-40 flex items-center justify-center">
-          <p className="text-slate-400 text-sm">Sin datos para este mes</p>
-        </div>
+        <p className="text-slate-400 text-sm py-6 text-center">Sin datos para este mes</p>
       </div>
     )
   }
@@ -43,32 +52,41 @@ export default function MentionsBar({ reasons, groupTotal, type, title }: Props)
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5">
       <h3 className="text-sm font-semibold text-slate-700 mb-1">{title}</h3>
-      <p className="text-xs text-slate-400 mb-4">
-        % sobre {groupTotal} {type === 'positive' ? 'promotores' : 'detractores'}
+      <div className="flex items-center gap-4 mb-4">
+        <p className="text-xs text-slate-400">
+          % sobre {groupTotal} {type === 'positive' ? 'promotores' : 'detractores'} · top 3 resaltado
+        </p>
+        <div className="flex items-center gap-2 ml-auto">
+          {(['#1', '#2', '#3'] as const).map((label, i) => (
+            <span key={label} className="flex items-center gap-1 text-xs text-slate-500">
+              <span className={`inline-block w-3 h-3 rounded-sm ${rankColor[i]}`} />
+              {label}
+            </span>
+          ))}
+        </div>
+      </div>
+      <table className="w-full text-xs border-separate border-spacing-0">
+        <tbody>
+          {rows.map(({ topic, pct, count, rank }) => (
+            <tr key={topic} className="group">
+              <td className="text-slate-700 py-1.5 pr-4 group-hover:text-slate-900">
+                {topic}
+              </td>
+              <td className="py-1.5 pl-1 text-center w-16">
+                <span
+                  className={`inline-block w-full rounded px-2 py-1 tabular-nums ${getRankStyle(rank, pct, type)}`}
+                  title={`${count} respuestas`}
+                >
+                  {pct > 0 ? `${pct}%` : '—'}
+                </span>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+      <p className="text-xs text-slate-400 mt-3">
+        Pasá el cursor sobre cada celda para ver la cantidad de respuestas
       </p>
-      <ResponsiveContainer width="100%" height={Math.max(200, data.length * 36)}>
-        <BarChart
-          data={data}
-          layout="vertical"
-          margin={{ top: 0, right: 50, left: 10, bottom: 0 }}
-        >
-          <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" horizontal={false} />
-          <XAxis type="number" tickFormatter={v => `${v}%`} tick={{ fontSize: 11 }} domain={[0, 100]} />
-          <YAxis
-            type="category"
-            dataKey="name"
-            tick={{ fontSize: 11 }}
-            width={165}
-          />
-          <Tooltip
-            formatter={(value, _, props) => {
-              const p = props?.payload as { fullName: string; count: number }
-              return [`${value}% (${p?.count ?? 0} resp.)`, p?.fullName ?? '']
-            }}
-          />
-          <Bar dataKey="pct" fill={color} radius={[0, 4, 4, 0]} background={{ fill: emptyColor }} />
-        </BarChart>
-      </ResponsiveContainer>
     </div>
   )
 }
