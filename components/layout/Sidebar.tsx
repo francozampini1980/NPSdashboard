@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   BarChart3,
@@ -101,12 +102,13 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
         }`}
       >
         {!collapsed && (
-          <div>
-            <h1 className="text-blue-700 font-bold text-lg leading-tight">
-              Métricas de<br />Experiencia
-            </h1>
-            <p className="text-blue-600/70 text-xs mt-1">Dashboard NPS</p>
-          </div>
+          <Image
+            src="/logo_fravega.svg"
+            alt="Frávega"
+            width={110}
+            height={17}
+            priority
+          />
         )}
         <button
           onClick={onToggle}

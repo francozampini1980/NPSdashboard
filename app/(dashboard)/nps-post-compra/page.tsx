@@ -61,12 +61,12 @@ export default function NPSPostCompraPage() {
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-800">NPS Post Compra</h2>
-        <p className="text-slate-500 text-sm mt-1">Encuesta de experiencia luego de la compra</p>
+        <p className="text-slate-500 text-sm mt-1 max-w-2xl">En este tablero analizamos nuestro NPS (índice de recomendación de Frávega) basado en la experiencia de los clientes en el sitio. Vas a encontrar menciones sobre aspectos clave de la experiencia y comentarios abiertos que organizamos en 4 temas principales para identificar motivos de promoción y detracción.</p>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-fit mb-6">
-        {([['mes-actual', 'Mes actual'], ['evolutivo', 'Evolutivo']] as const).map(([val, label]) => (
+        {([['mes-actual', 'Mes'], ['evolutivo', 'Evolutivo']] as const).map(([val, label]) => (
           <button
             key={val}
             onClick={() => setActiveTab(val)}

@@ -60,12 +60,12 @@ export default function NPSPostEntregaPage() {
       {/* Header */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-slate-800">NPS Post Entrega</h2>
-        <p className="text-slate-500 text-sm mt-1">Encuesta de experiencia luego de la entrega</p>
+        <p className="text-slate-500 text-sm mt-1 max-w-2xl">En este tablero analizamos nuestro NPS basado en la experiencia de compras con envío a domicilio y el seguimiento de los pedidos. Ponemos el foco en tres puntos clave de la entrega: la puntualidad, el trato del transportista y el estado en el que recibiste tu producto.</p>
       </div>
 
       {/* Tabs */}
       <div className="flex gap-1 bg-slate-100 p-1 rounded-lg w-fit mb-6">
-        {([['mes-actual', 'Mes actual'], ['evolutivo', 'Evolutivo']] as const).map(([val, label]) => (
+        {([['mes-actual', 'Mes'], ['evolutivo', 'Evolutivo']] as const).map(([val, label]) => (
           <button
             key={val}
             onClick={() => setActiveTab(val)}
