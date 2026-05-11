@@ -29,7 +29,8 @@ export default function MetricScoreCard({ title, question, type, score, goodPct,
       </div>
 
       <div className="flex items-end gap-2">
-        <span className="text-4xl font-bold text-slate-800">{Math.round(score)}%</span>
+        <span className="text-4xl font-bold text-slate-800">{score.toFixed(1)}</span>
+        <span className="text-sm text-slate-400 mb-1">/ 5</span>
       </div>
 
       {/* Stacked segment bar */}
