@@ -193,7 +193,7 @@ export default function PostEntregaTab() {
             <div className="border-t border-emerald-200 pt-4">
               <div className="flex items-center justify-between mb-3">
                 <p className="text-xs font-semibold text-slate-600">
-                  4 aspectos más mencionados — Negativos 🤬 seguimiento de pedido (col C)
+                  4 aspectos más mencionados — Negativos 🤬 seguimiento de pedido
                 </p>
                 {pendingData.ces_comments && pendingData.ces_comments.length > 0 && (
                   <span className="text-xs text-slate-400">
