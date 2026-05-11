@@ -299,7 +299,7 @@ function CalculosTab() {
             { range: 'Más de 70', label: 'Clase Mundial', desc: 'Fidelidad excepcional (ej. Apple, Costco).', color: 'border-l-emerald-400' },
           ].map(item => (
             <div key={item.label} className={`border-l-4 pl-3 py-1 ${item.color}`}>
-              <p className="text-sm font-semibold text-slate-700">{item.label} <span className="font-normal text-slate-400">({item.range})</span></p>
+              <p className="text-base font-semibold text-slate-700">{item.label} <span className="font-normal text-slate-400">({item.range})</span></p>
               <p className="text-xs text-slate-500">{item.desc}</p>
             </div>
           ))}
@@ -331,7 +331,7 @@ function CalculosTab() {
             { range: '4 a 5', label: 'Bueno', desc: 'El cliente está satisfecho y el proceso fue fluido.', color: 'border-l-emerald-400', bg: 'bg-emerald-50' },
           ].map(item => (
             <div key={item.label} className={`border-l-4 pl-3 py-2 rounded-r-lg ${item.color} ${item.bg}`}>
-              <p className="text-sm font-semibold text-slate-700">{item.label} <span className="font-normal text-slate-400">({item.range})</span></p>
+              <p className="text-base font-semibold text-slate-700">{item.label} <span className="font-normal text-slate-400">({item.range})</span></p>
               <p className="text-xs text-slate-500">{item.desc}</p>
             </div>
           ))}

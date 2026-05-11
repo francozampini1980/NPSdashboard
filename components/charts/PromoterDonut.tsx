@@ -23,7 +23,7 @@ export default function PromoterDonut({ promoters, neutrals, detractors, total }
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-5">
-      <h3 className="text-sm font-semibold text-slate-700">Promotores · Neutros · Detractores</h3>
+      <h3 className="text-base font-semibold text-slate-700">Promotores · Neutros · Detractores</h3>
 
       {/* Barra apilada horizontal */}
       <div className="flex h-10 rounded-xl overflow-hidden gap-px bg-slate-100">

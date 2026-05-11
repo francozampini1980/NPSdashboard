@@ -43,7 +43,7 @@ export default function MentionsBar({ reasons, groupTotal, type, title }: Props)
   if (rows.length === 0) {
     return (
       <div className="bg-white rounded-xl border border-slate-200 p-5">
-        <h3 className="text-sm font-semibold text-slate-700 mb-2">{title}</h3>
+        <h3 className="text-base font-semibold text-slate-700 mb-2">{title}</h3>
         <p className="text-slate-400 text-sm py-6 text-center">Sin datos para este mes</p>
       </div>
     )
@@ -51,7 +51,7 @@ export default function MentionsBar({ reasons, groupTotal, type, title }: Props)
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5">
-      <h3 className="text-sm font-semibold text-slate-700 mb-1">{title}</h3>
+      <h3 className="text-base font-semibold text-slate-700 mb-1">{title}</h3>
       <div className="flex items-center gap-4 mb-4">
         <p className="text-xs text-slate-400">
           % sobre {groupTotal} {type === 'positive' ? 'promotores' : 'detractores'} · top 3 resaltado

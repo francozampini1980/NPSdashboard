@@ -20,7 +20,7 @@ export default function MetricScoreCard({ title, question, type, score, goodPct,
     <div className="bg-white rounded-xl border border-slate-200 p-5 flex flex-col gap-4">
       <div className="flex items-start justify-between gap-2">
         <div>
-          <p className="text-sm font-semibold text-slate-700">{title}</p>
+          <p className="text-base font-semibold text-slate-700">{title}</p>
           <p className="text-xs text-slate-400 mt-0.5 leading-snug">{question}</p>
         </div>
         <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 mt-0.5 ${TYPE_STYLE[type]}`}>

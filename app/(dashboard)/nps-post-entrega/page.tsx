@@ -160,7 +160,7 @@ export default function NPSPostEntregaPage() {
 
               {/* Section: CES */}
               <div>
-                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                <h3 className="text-base font-semibold text-slate-500 uppercase tracking-wide mb-3">
                   Seguimiento del pedido
                 </h3>
                 <MetricScoreCard
@@ -176,7 +176,7 @@ export default function NPSPostEntregaPage() {
 
               {/* Section: CSAT */}
               <div>
-                <h3 className="text-sm font-semibold text-slate-500 uppercase tracking-wide mb-3">
+                <h3 className="text-base font-semibold text-slate-500 uppercase tracking-wide mb-3">
                   Satisfacción con la entrega
                 </h3>
                 <p className="text-xs text-slate-400 mb-3">

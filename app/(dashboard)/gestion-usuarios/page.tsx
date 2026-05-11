@@ -182,7 +182,7 @@ export default function GestionUsuariosPage() {
 
       {/* Create user form */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-        <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+        <h2 className="text-base font-semibold text-slate-700 mb-4 flex items-center gap-2">
           <KeyRound size={16} />
           Crear usuario con contraseña
         </h2>
@@ -251,7 +251,7 @@ export default function GestionUsuariosPage() {
 
       {/* Invite form */}
       <div className="bg-white rounded-xl border border-slate-200 p-6 mb-6">
-        <h2 className="text-sm font-semibold text-slate-700 mb-4 flex items-center gap-2">
+        <h2 className="text-base font-semibold text-slate-700 mb-4 flex items-center gap-2">
           <UserPlus size={16} />
           Invitar usuario por email
         </h2>
@@ -295,7 +295,7 @@ export default function GestionUsuariosPage() {
       {/* Users table */}
       <div className="bg-white rounded-xl border border-slate-200">
         <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100">
-          <h2 className="text-sm font-semibold text-slate-700">
+          <h2 className="text-base font-semibold text-slate-700">
             Usuarios ({users.length})
           </h2>
           <button

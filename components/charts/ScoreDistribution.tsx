@@ -22,7 +22,7 @@ export default function ScoreDistribution({ distribution, total }: Props) {
 
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-5">
-      <h3 className="text-sm font-semibold text-slate-700 mb-4">Distribución de valoraciones (0-10)</h3>
+      <h3 className="text-base font-semibold text-slate-700 mb-4">Distribución de valoraciones (0-10)</h3>
       <ResponsiveContainer width="100%" height={220}>
         <BarChart data={data} margin={{ top: 5, right: 10, left: -20, bottom: 5 }}>
           <CartesianGrid strokeDasharray="3 3" stroke="#F1F5F9" />

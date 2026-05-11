@@ -32,7 +32,7 @@ export default function CommentHighlights({
     <>
       <div className="bg-white rounded-xl border border-slate-200 p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-slate-700">
+          <h3 className="text-base font-semibold text-slate-700">
             Motivos para detracción y promoción
           </h3>
           {openComments && openComments.length > 0 && (
@@ -100,7 +100,7 @@ export function AspectsCard({
     <>
       <div className="bg-white rounded-xl border border-slate-200 p-5">
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-sm font-semibold text-slate-700">{title}</h3>
+          <h3 className="text-base font-semibold text-slate-700">{title}</h3>
           {comments && comments.length > 0 && (
             <button
               onClick={() => setModalOpen(true)}
@@ -152,7 +152,7 @@ function AspectList({ label, aspects, color }: {
 
   return (
     <div className={`rounded-lg border p-4 ${bgClass}`}>
-      <p className={`text-xs font-semibold mb-3 ${labelClass}`}>{label}</p>
+      <p className={`text-sm font-semibold mb-3 ${labelClass}`}>{label}</p>
       <ol className="space-y-4">
         {aspects.map((aspect, i) => (
           <li key={i} className="flex items-start gap-2">
