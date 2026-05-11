@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { getBrowserClient } from '@/lib/supabase-browser'
-import { BarChart3, Loader2 } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 
 type Mode = 'login' | 'forgot'
 
@@ -47,9 +48,14 @@ export default function LoginPage() {
     <div className="w-full max-w-sm">
       {/* Logo */}
       <div className="text-center mb-8">
-        <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-blue-600 mb-4">
-          <BarChart3 size={24} className="text-white" />
-        </div>
+        <Image
+          src="/logo_fravega.svg"
+          alt="Frávega"
+          width={140}
+          height={21}
+          priority
+          className="mx-auto mb-4"
+        />
         <h1 className="text-xl font-bold text-slate-800">Métricas de Experiencia</h1>
         <p className="text-slate-500 text-sm mt-1">Dashboard NPS</p>
       </div>
