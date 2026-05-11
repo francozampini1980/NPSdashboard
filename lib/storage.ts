@@ -5,6 +5,14 @@ import { isSupabaseConfigured } from './supabase'
 import { getBrowserClient } from './supabase-browser'
 
 const LOCAL_STORAGE_KEY = 'nps_dashboard_data'
+const CACHE_TTL_MS = 5 * 60 * 1000 // 5 minutos
+
+// Caché en memoria — evita re-fetches al navegar entre páginas
+let cache: { data: MonthlyNPSData[]; ts: number } | null = null
+
+function invalidateCache() {
+  cache = null
+}
 
 function getLocalData(): MonthlyNPSData[] {
   if (typeof window === 'undefined') return []
@@ -23,25 +31,25 @@ function saveLocalData(data: MonthlyNPSData[]): void {
 
 export async function getAllMonths(): Promise<MonthlyNPSData[]> {
   if (isSupabaseConfigured()) {
+    const now = Date.now()
+    if (cache && now - cache.ts < CACHE_TTL_MS) return cache.data
+
     const { data, error } = await getBrowserClient()
       .from('nps_monthly_data')
       .select('*')
       .order('month', { ascending: true })
     if (error) throw error
-    return data ?? []
+    const result = data ?? []
+    cache = { data: result, ts: now }
+    return result
   }
   return getLocalData().sort((a, b) => a.month.localeCompare(b.month))
 }
 
 export async function getMonthData(month: string): Promise<MonthlyNPSData | null> {
   if (isSupabaseConfigured()) {
-    const { data, error } = await getBrowserClient()
-      .from('nps_monthly_data')
-      .select('*')
-      .eq('month', month)
-      .single()
-    if (error) return null
-    return data
+    const all = await getAllMonths()
+    return all.find(d => d.month === month) ?? null
   }
   const all = getLocalData()
   return all.find(d => d.month === month) ?? null
@@ -53,6 +61,7 @@ export async function upsertMonthData(data: MonthlyNPSData): Promise<void> {
       .from('nps_monthly_data')
       .upsert({ ...data, updated_at: new Date().toISOString() }, { onConflict: 'month,survey_type' })
     if (error) throw error
+    invalidateCache()
     return
   }
   const all = getLocalData()
@@ -73,6 +82,7 @@ export async function deleteMonthData(month: string, surveyType = 'post_purchase
       .eq('month', month)
       .eq('survey_type', surveyType)
     if (error) throw error
+    invalidateCache()
     return
   }
   const all = getLocalData()

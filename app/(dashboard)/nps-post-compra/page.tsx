@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight, AlertCircle } from 'lucide-react'
 import { getAllMonths } from '@/lib/storage'
+import { useEvolutivePage } from '@/lib/hooks/useEvolutivePage'
 import { MonthlyNPSData, formatMonthLabelFull } from '@/types'
 import NPSScoreCard from '@/components/charts/NPSScoreCard'
 import PromoterDonut from '@/components/charts/PromoterDonut'
@@ -13,46 +14,30 @@ import EvolutivePromoters from '@/components/charts/EvolutivePromoters'
 import EvolutiveMentions from '@/components/charts/EvolutiveMentions'
 import CommentHighlights from '@/components/charts/CommentHighlights'
 
-const MONTHS_PER_PAGE = 6
-
 export default function NPSPostCompraPage() {
   const [activeTab, setActiveTab] = useState<'mes-actual' | 'evolutivo'>('evolutivo')
   const [allMonths, setAllMonths] = useState<MonthlyNPSData[]>([])
-  const [selectedMonth, setSelectedMonth] = useState<string>('')
-  const [evolutivePage, setEvolutivePage] = useState(0)
   const [loading, setLoading] = useState(true)
 
-  const loadData = useCallback(async () => {
-    setLoading(true)
-    try {
-      const data = await getAllMonths()
-      const postPurchase = data.filter(d => d.survey_type === 'post_purchase')
-      setAllMonths(postPurchase)
-      if (postPurchase.length > 0) {
-        if (!selectedMonth) setSelectedMonth(postPurchase[postPurchase.length - 1].month)
-        const totalPages = Math.ceil(postPurchase.length / MONTHS_PER_PAGE)
-        setEvolutivePage(Math.max(0, totalPages - 1))
-      }
-    } finally {
-      setLoading(false)
-    }
-  }, [selectedMonth])
+  const {
+    selectedMonth, setSelectedMonth,
+    evolutiveSlice, currentData,
+    totalPages, maxPage, safePage: safeEvolutivePage,
+    initFromData, goToPrevPage, goToNextPage,
+  } = useEvolutivePage(allMonths)
 
   useEffect(() => {
-    loadData()
+    let cancelled = false
+    setLoading(true)
+    getAllMonths().then(data => {
+      if (cancelled) return
+      const postPurchase = data.filter(d => d.survey_type === 'post_purchase')
+      setAllMonths(postPurchase)
+      initFromData(postPurchase)
+      setLoading(false)
+    }).catch(() => setLoading(false))
+    return () => { cancelled = true }
   }, [])
-
-  const currentData = allMonths.find(m => m.month === selectedMonth) ?? null
-
-  // Evolutive: paginate by MONTHS_PER_PAGE from oldest to newest
-  const totalPages = Math.ceil(allMonths.length / MONTHS_PER_PAGE)
-  const maxPage = Math.max(0, totalPages - 1)
-  const safeEvolutivePage = Math.min(evolutivePage, maxPage)
-
-  const evolutiveSlice = allMonths.slice(
-    safeEvolutivePage * MONTHS_PER_PAGE,
-    safeEvolutivePage * MONTHS_PER_PAGE + MONTHS_PER_PAGE
-  )
 
   if (loading) {
     return (
@@ -183,7 +168,7 @@ export default function NPSPostCompraPage() {
             </p>
             <div className="flex items-center gap-2">
               <button
-                onClick={() => setEvolutivePage(p => Math.max(0, p - 1))}
+                onClick={goToPrevPage}
                 disabled={safeEvolutivePage === 0}
                 className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition"
               >
@@ -193,7 +178,7 @@ export default function NPSPostCompraPage() {
                 {safeEvolutivePage + 1} / {Math.max(1, totalPages)}
               </span>
               <button
-                onClick={() => setEvolutivePage(p => Math.min(maxPage, p + 1))}
+                onClick={goToNextPage}
                 disabled={safeEvolutivePage >= maxPage}
                 className="p-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50 disabled:opacity-30 disabled:cursor-not-allowed transition"
               >
