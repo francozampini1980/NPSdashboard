@@ -1,5 +1,6 @@
 import Papa from 'papaparse'
 import { ParsedCSVRow, MonthlyNPSData, POSITIVE_TOPICS, NEGATIVE_TOPICS } from '@/types'
+import { findDataStart } from './csv-utils'
 
 // Column indices (0-based): A=0, B=1, C=2, D=3, E=4, F=5, G=6, H=7, ...
 const COL = {
@@ -34,16 +35,7 @@ export function parseCSV(
   const rows = result.data as string[][]
 
   // Skip header row(s) — find first row where column K is a number 0-10
-  let startIdx = 0
-  for (let i = 0; i < Math.min(rows.length, 5); i++) {
-    const val = rows[i][COL.nps]
-    const n = Number(val)
-    if (!isNaN(n) && n >= 0 && n <= 10) {
-      startIdx = i
-      break
-    }
-    startIdx = i + 1
-  }
+  const startIdx = findDataStart(rows, COL.nps)
 
   const dataRows = rows.slice(startIdx)
 

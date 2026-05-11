@@ -1,5 +1,6 @@
 import Papa from 'papaparse'
 import { PostEntregaMonthlyData } from '@/types'
+import { findDataStart } from './csv-utils'
 
 // Post-entrega CSV columns (0-indexed):
 // A=0 NPS (0-10), B=1 CES (1-5), C=2 comentario neg CES (skip),
@@ -52,15 +53,7 @@ export function parsePostEntregaCSV(
   const rows = result.data as string[][]
 
   // Find first data row where column A is 0-10
-  let startIdx = 0
-  for (let i = 0; i < Math.min(rows.length, 5); i++) {
-    const val = Number(rows[i][COL.nps])
-    if (!isNaN(val) && val >= 0 && val <= 10) {
-      startIdx = i
-      break
-    }
-    startIdx = i + 1
-  }
+  const startIdx = findDataStart(rows, COL.nps)
 
   const dataRows = rows.slice(startIdx).filter(row => {
     const val = Number(row[COL.nps])
