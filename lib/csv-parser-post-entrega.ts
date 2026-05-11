@@ -25,6 +25,8 @@ function parsePostEntregaDate(dateStr: string): string {
   return `${year}-${month}`
 }
 
+// Score = % de respuestas satisfactorias (4 o 5) sobre el total de válidas
+// Estándar CSAT/CES: (respuestas 4+5 / total) × 100
 function calcMetric(values: number[]): {
   score: number
   good_pct: number
@@ -33,12 +35,11 @@ function calcMetric(values: number[]): {
 } {
   const valid = values.filter(v => v >= 1 && v <= 5)
   if (valid.length === 0) return { score: 0, good_pct: 0, regular_pct: 0, bad_pct: 0 }
-  const score = valid.reduce((a, b) => a + b, 0) / valid.length
   const good_pct = (valid.filter(v => v >= 4).length / valid.length) * 100
   const regular_pct = (valid.filter(v => v === 3).length / valid.length) * 100
   const bad_pct = (valid.filter(v => v <= 2).length / valid.length) * 100
   return {
-    score: Math.round(score * 100) / 100,
+    score: Math.round(good_pct * 10) / 10,
     good_pct: Math.round(good_pct * 10) / 10,
     regular_pct: Math.round(regular_pct * 10) / 10,
     bad_pct: Math.round(bad_pct * 10) / 10,
