@@ -22,7 +22,8 @@ async function getRole(supabase: Awaited<ReturnType<typeof makeSupabase>>, userI
 }
 
 // GET /api/surveys/[id] — survey + questions
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await makeSupabase()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -30,7 +31,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const { data, error } = await supabase
     .from('surveys')
     .select('*, survey_questions(*)')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 404 })
@@ -43,7 +44,8 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 }
 
 // PUT /api/surveys/[id] — update survey + replace questions
-export async function PUT(req: Request, { params }: { params: { id: string } }) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await makeSupabase()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -60,18 +62,18 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
   const { data: survey, error: surveyError } = await supabase
     .from('surveys')
     .update(surveyData)
-    .eq('id', params.id)
+    .eq('id', id)
     .select()
     .single()
 
   if (surveyError) return NextResponse.json({ error: surveyError.message }, { status: 500 })
 
   // Replace questions: delete all, re-insert
-  await supabase.from('survey_questions').delete().eq('survey_id', params.id)
+  await supabase.from('survey_questions').delete().eq('survey_id', id)
 
   if (questions && questions.length > 0) {
     const rows = questions.map((q: Record<string, unknown>, i: number) => ({
-      survey_id: params.id,
+      survey_id: id,
       position: i,
       type: q.type,
       question: q.question,
@@ -87,7 +89,8 @@ export async function PUT(req: Request, { params }: { params: { id: string } }) 
 }
 
 // DELETE /api/surveys/[id]
-export async function DELETE(_req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await makeSupabase()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -97,7 +100,7 @@ export async function DELETE(_req: Request, { params }: { params: { id: string }
     return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
   }
 
-  const { error } = await supabase.from('surveys').delete().eq('id', params.id)
+  const { error } = await supabase.from('surveys').delete().eq('id', id)
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
   return NextResponse.json({ ok: true })

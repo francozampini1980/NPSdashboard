@@ -26,7 +26,8 @@ function escapeCsv(val: unknown): string {
 }
 
 // GET /api/surveys/[id]/csv
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await makeSupabase()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -35,7 +36,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const { data: survey, error: sErr } = await supabase
     .from('surveys')
     .select('name, survey_questions(*)')
-    .eq('id', params.id)
+    .eq('id', id)
     .single()
 
   if (sErr) return NextResponse.json({ error: sErr.message }, { status: 404 })
@@ -48,7 +49,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const { data: responses, error: rErr } = await supabase
     .from('survey_responses')
     .select('*, survey_answers(*)')
-    .eq('survey_id', params.id)
+    .eq('survey_id', id)
     .order('completed_at', { ascending: true })
 
   if (rErr) return NextResponse.json({ error: rErr.message }, { status: 500 })

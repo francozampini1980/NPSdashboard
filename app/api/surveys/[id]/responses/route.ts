@@ -17,7 +17,8 @@ async function makeSupabase() {
 }
 
 // GET /api/surveys/[id]/responses — list responses with answers
-export async function GET(_req: Request, { params }: { params: { id: string } }) {
+export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const supabase = await makeSupabase()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -25,7 +26,7 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
   const { data, error } = await supabase
     .from('survey_responses')
     .select('*, survey_answers(*)')
-    .eq('survey_id', params.id)
+    .eq('survey_id', id)
     .order('completed_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
@@ -33,7 +34,9 @@ export async function GET(_req: Request, { params }: { params: { id: string } })
 }
 
 // POST /api/surveys/[id]/responses — submit a completed survey (public, no auth)
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
+
   // Use anon client for public submission
   const cookieStore = await cookies()
   const supabase = createServerClient(
@@ -53,7 +56,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
   // Insert response
   const { data: response, error: respError } = await supabase
     .from('survey_responses')
-    .insert({ survey_id: params.id, var1, var2, var3 })
+    .insert({ survey_id: id, var1, var2, var3 })
     .select()
     .single()
 
