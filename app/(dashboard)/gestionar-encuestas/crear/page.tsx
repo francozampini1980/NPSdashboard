@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { createClient } from '@supabase/supabase-js'
 import type { BuilderState } from '@/types/survey'
@@ -11,7 +11,8 @@ import Step3Config from './_components/Step3Config'
 
 const STEPS = ['Información', 'Preguntas', 'Configuración']
 
-export default function CrearEncuestaPage() {
+// Inner component that uses useSearchParams (must be wrapped in Suspense)
+function CrearEncuestaInner() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const editingId = searchParams.get('edit')
@@ -145,7 +146,9 @@ export default function CrearEncuestaPage() {
           {editingId ? 'Editar encuesta' : 'Crear encuesta'}
         </h2>
         <p className="text-slate-500 text-sm mt-1">
-          {editingId ? 'Modificá los datos y guardá los cambios.' : 'Completá los 3 pasos para publicar tu encuesta.'}
+          {editingId
+            ? 'Modificá los datos y guardá los cambios.'
+            : 'Completá los 3 pasos para publicar tu encuesta.'}
         </p>
       </div>
 
@@ -225,5 +228,19 @@ export default function CrearEncuestaPage() {
         )}
       </div>
     </div>
+  )
+}
+
+export default function CrearEncuestaPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex items-center justify-center h-60 text-slate-400 text-sm">
+          Cargando…
+        </div>
+      }
+    >
+      <CrearEncuestaInner />
+    </Suspense>
   )
 }
