@@ -12,7 +12,18 @@ interface Props {
 export default function Step1Info({ state, onChange }: Props) {
   const fileRef = useRef<HTMLInputElement>(null)
 
+  const ALLOWED = ['image/png', 'image/jpeg', 'image/webp', 'image/svg+xml', 'image/gif']
+  const MAX_MB = 2
+
   function handleFile(file: File) {
+    if (!ALLOWED.includes(file.type)) {
+      alert('Formato no soportado. Usá PNG, JPG, WEBP, SVG o GIF.')
+      return
+    }
+    if (file.size > MAX_MB * 1024 * 1024) {
+      alert(`La imagen supera los ${MAX_MB} MB permitidos.`)
+      return
+    }
     onChange({
       headerImageFile: file,
       headerImageUrl: URL.createObjectURL(file),
@@ -81,14 +92,14 @@ export default function Step1Info({ state, onChange }: Props) {
         <input
           ref={fileRef}
           type="file"
-          accept="image/*"
+          accept=".png,.jpg,.jpeg,.webp,.svg,.gif"
           className="hidden"
           onChange={e => {
             const file = e.target.files?.[0]
             if (file) handleFile(file)
           }}
         />
-        <p className="text-xs text-slate-400 mt-1">Solo visible en la encuesta pública como branding.</p>
+        <p className="text-xs text-slate-400 mt-1">PNG, JPG, WEBP, SVG o GIF · máx. 2 MB · solo visible en la encuesta pública.</p>
       </div>
 
       {/* Footer */}
