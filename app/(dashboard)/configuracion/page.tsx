@@ -10,7 +10,7 @@ export default function ConfiguracionPage() {
   return (
     <div className="p-6 max-w-4xl mx-auto">
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-slate-800">Configuración</h2>
+        <h2 className="text-2xl font-bold text-slate-800">Subir CSV</h2>
         <p className="text-slate-500 text-sm mt-1">Cargá y gestioná los archivos CSV mensuales</p>
       </div>
 

@@ -31,8 +31,9 @@ export async function middleware(request: NextRequest) {
 
   const pathname = request.nextUrl.pathname
   const isAuthRoute = pathname.startsWith('/login') || pathname.startsWith('/auth')
+  const isPublicSurvey = pathname.startsWith('/e/')
 
-  if (!user && !isAuthRoute) {
+  if (!user && !isAuthRoute && !isPublicSurvey) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
     return NextResponse.redirect(loginUrl)

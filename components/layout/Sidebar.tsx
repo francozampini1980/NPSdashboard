@@ -12,6 +12,8 @@ import {
   ChevronLeft,
   Users,
   LogOut,
+  PlusCircle,
+  ClipboardList,
 } from 'lucide-react'
 import { useAuth, type Role } from '@/lib/auth-context'
 
@@ -24,43 +26,80 @@ interface NavItem {
   minRole?: Role
 }
 
+interface NavGroup {
+  label: string
+  minRole?: Role
+  items: NavItem[]
+}
+
 interface SidebarProps {
   collapsed: boolean
   onToggle: () => void
 }
 
-const navItems: NavItem[] = [
+const navGroups: NavGroup[] = [
   {
-    href: '/nps-post-compra',
-    label: 'NPS Post Compra',
-    icon: BarChart3,
-    enabled: true,
+    label: 'Dashboard',
+    items: [
+      {
+        href: '/nps-post-compra',
+        label: 'NPS Post Compra',
+        icon: BarChart3,
+        enabled: true,
+      },
+      {
+        href: '/nps-post-entrega',
+        label: 'NPS Post Entrega',
+        icon: Truck,
+        enabled: true,
+      },
+      {
+        href: '/como-medimos',
+        label: '¿Cómo medimos?',
+        icon: HelpCircle,
+        enabled: true,
+      },
+    ],
   },
   {
-    href: '/nps-post-entrega',
-    label: 'NPS Post Entrega',
-    icon: Truck,
-    enabled: true,
-  },
-  {
-    href: '/como-medimos',
-    label: '¿Cómo medimos?',
-    icon: HelpCircle,
-    enabled: true,
-  },
-  {
-    href: '/configuracion',
-    label: 'Configuración',
-    icon: Settings,
-    enabled: true,
+    label: 'Gestionar encuestas',
     minRole: 'editor',
+    items: [
+      {
+        href: '/gestionar-encuestas/crear',
+        label: 'Crear encuesta',
+        icon: PlusCircle,
+        enabled: true,
+        minRole: 'editor',
+      },
+      {
+        href: '/gestionar-encuestas/encuestas',
+        label: 'Encuestas',
+        icon: ClipboardList,
+        enabled: true,
+        minRole: 'editor',
+      },
+    ],
   },
   {
-    href: '/gestion-usuarios',
-    label: 'Gestión de usuarios',
-    icon: Users,
-    enabled: true,
-    minRole: 'dios',
+    label: 'Configuración',
+    minRole: 'editor',
+    items: [
+      {
+        href: '/configuracion',
+        label: 'Subir CSV',
+        icon: Settings,
+        enabled: true,
+        minRole: 'editor',
+      },
+      {
+        href: '/gestion-usuarios',
+        label: 'Gestión de usuarios',
+        icon: Users,
+        enabled: true,
+        minRole: 'dios',
+      },
+    ],
   },
 ]
 
@@ -70,10 +109,10 @@ function roleLabel(role: Role | null): string {
   return 'Visitante'
 }
 
-function canSeeItem(item: NavItem, role: Role | null): boolean {
-  if (!item.minRole) return true
-  if (item.minRole === 'editor') return role === 'editor' || role === 'dios'
-  if (item.minRole === 'dios') return role === 'dios'
+function canSee(minRole: Role | undefined, role: Role | null): boolean {
+  if (!minRole) return true
+  if (minRole === 'editor') return role === 'editor' || role === 'dios'
+  if (minRole === 'dios') return role === 'dios'
   return true
 }
 
@@ -87,6 +126,15 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
     router.push('/login')
     router.refresh()
   }
+
+  // Filter groups/items the current role can see
+  const visibleGroups = navGroups
+    .filter(g => canSee(g.minRole, role))
+    .map(g => ({
+      ...g,
+      items: g.items.filter(item => canSee(item.minRole, role)),
+    }))
+    .filter(g => g.items.length > 0)
 
   return (
     <aside
@@ -120,64 +168,74 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-2 py-4 space-y-1">
-        {navItems.map(item => {
-          const Icon = item.icon
+      <nav className="flex-1 px-2 py-4 overflow-y-auto">
+        {visibleGroups.map((group, gi) => (
+          <div key={group.label} className={gi > 0 ? 'mt-4' : ''}>
+            {/* Group header */}
+            {!collapsed && (
+              <p className="px-3 mb-1 text-[10px] font-semibold uppercase tracking-widest text-blue-400 select-none">
+                {group.label}
+              </p>
+            )}
+            {collapsed && gi > 0 && (
+              <div className="my-2 mx-2 border-t border-blue-700/20" />
+            )}
 
-          if (!canSeeItem(item, role)) return null
+            <div className="space-y-0.5">
+              {group.items.map(item => {
+                const Icon = item.icon
 
-          if (!item.enabled) {
-            return (
-              <div
-                key={item.href}
-                title={collapsed ? item.label : undefined}
-                className={`flex items-center rounded-lg opacity-40 cursor-not-allowed transition-all ${
-                  collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
-                }`}
-              >
-                <Icon size={18} className="text-blue-600 shrink-0" />
-                {!collapsed && (
-                  <>
-                    <span className="text-blue-600 text-sm flex-1">{item.label}</span>
-                    {item.badge && (
-                      <span className="text-[10px] bg-blue-700/15 text-blue-700 px-1.5 py-0.5 rounded">
-                        {item.badge}
-                      </span>
+                if (!item.enabled) {
+                  return (
+                    <div
+                      key={item.href}
+                      title={collapsed ? item.label : undefined}
+                      className={`flex items-center rounded-lg opacity-40 cursor-not-allowed transition-all ${
+                        collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
+                      }`}
+                    >
+                      <Icon size={18} className="text-blue-600 shrink-0" />
+                      {!collapsed && (
+                        <span className="text-blue-600 text-sm flex-1">{item.label}</span>
+                      )}
+                    </div>
+                  )
+                }
+
+                const isActive =
+                  item.href === '/gestionar-encuestas/crear'
+                    ? pathname === item.href || pathname.startsWith('/gestionar-encuestas/crear')
+                    : pathname.startsWith(item.href)
+
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    title={collapsed ? item.label : undefined}
+                    className={`flex items-center rounded-lg transition-all group ${
+                      collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
+                    } ${
+                      isActive
+                        ? 'bg-blue-700/20 text-blue-700'
+                        : 'text-blue-600 hover:bg-black/5 hover:text-blue-800'
+                    }`}
+                  >
+                    <Icon
+                      size={18}
+                      className={`shrink-0 ${isActive ? 'text-blue-700' : 'text-blue-600 group-hover:text-blue-800'}`}
+                    />
+                    {!collapsed && (
+                      <>
+                        <span className="text-sm flex-1">{item.label}</span>
+                        {isActive && <ChevronRight size={14} className="text-blue-700" />}
+                      </>
                     )}
-                  </>
-                )}
-              </div>
-            )
-          }
-
-          const isActive = pathname.startsWith(item.href)
-
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              title={collapsed ? item.label : undefined}
-              className={`flex items-center rounded-lg transition-all group ${
-                collapsed ? 'justify-center px-0 py-2.5' : 'gap-3 px-3 py-2.5'
-              } ${
-                isActive
-                  ? 'bg-blue-700/20 text-blue-700'
-                  : 'text-blue-600 hover:bg-black/5 hover:text-blue-800'
-              }`}
-            >
-              <Icon
-                size={18}
-                className={`shrink-0 ${isActive ? 'text-blue-700' : 'text-blue-600 group-hover:text-blue-800'}`}
-              />
-              {!collapsed && (
-                <>
-                  <span className="text-sm flex-1">{item.label}</span>
-                  {isActive && <ChevronRight size={14} className="text-blue-700" />}
-                </>
-              )}
-            </Link>
-          )
-        })}
+                  </Link>
+                )
+              })}
+            </div>
+          </div>
+        ))}
       </nav>
 
       {/* User info + logout */}
