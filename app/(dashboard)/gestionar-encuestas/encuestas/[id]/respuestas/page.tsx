@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useMemo } from 'react'
 import { useParams, useRouter } from 'next/navigation'
-import { ArrowLeft, Download } from 'lucide-react'
+import { ArrowLeft, Download, CalendarRange, X } from 'lucide-react'
 import type { SurveyQuestion } from '@/types/survey'
 
 interface Answer { question_id: string; value: unknown }
@@ -28,6 +28,11 @@ function formatDate(iso: string) {
   })
 }
 
+// YYYY-MM-DD from Date
+function toDateStr(d: Date) {
+  return d.toISOString().slice(0, 10)
+}
+
 export default function RespuestasPage() {
   const { id } = useParams<{ id: string }>()
   const router = useRouter()
@@ -36,6 +41,10 @@ export default function RespuestasPage() {
   const [questions, setQuestions] = useState<SurveyQuestion[]>([])
   const [responses, setResponses] = useState<Response[]>([])
   const [loading, setLoading] = useState(true)
+
+  // Date filter state
+  const [dateFrom, setDateFrom] = useState('')
+  const [dateTo, setDateTo] = useState('')
 
   useEffect(() => {
     Promise.all([
@@ -49,8 +58,37 @@ export default function RespuestasPage() {
     })
   }, [id])
 
+  // Filtered responses
+  const filtered = useMemo(() => {
+    return responses.filter(r => {
+      const ts = new Date(r.completed_at)
+      if (dateFrom) {
+        const from = new Date(dateFrom)
+        from.setHours(0, 0, 0, 0)
+        if (ts < from) return false
+      }
+      if (dateTo) {
+        const to = new Date(dateTo)
+        to.setHours(23, 59, 59, 999)
+        if (ts > to) return false
+      }
+      return true
+    })
+  }, [responses, dateFrom, dateTo])
+
+  const hasFilter = dateFrom || dateTo
+
+  function clearFilter() {
+    setDateFrom('')
+    setDateTo('')
+  }
+
   function downloadCsv() {
-    window.open(`/api/surveys/${id}/csv`, '_blank')
+    const params = new URLSearchParams()
+    if (dateFrom) params.set('from', dateFrom)
+    if (dateTo) params.set('to', dateTo)
+    const qs = params.toString()
+    window.open(`/api/surveys/${id}/csv${qs ? `?${qs}` : ''}`, '_blank')
   }
 
   if (loading) {
@@ -74,7 +112,9 @@ export default function RespuestasPage() {
           </button>
           <h2 className="text-2xl font-bold text-slate-800">{surveyName}</h2>
           <p className="text-slate-500 text-sm mt-1">
-            {responses.length.toLocaleString('es-AR')} respuesta{responses.length !== 1 ? 's' : ''}
+            {filtered.length.toLocaleString('es-AR')}
+            {hasFilter ? ` de ${responses.length.toLocaleString('es-AR')}` : ''}{' '}
+            respuesta{filtered.length !== 1 ? 's' : ''}
           </p>
         </div>
         <button
@@ -86,9 +126,46 @@ export default function RespuestasPage() {
         </button>
       </div>
 
-      {responses.length === 0 ? (
+      {/* Date filter */}
+      <div className="flex flex-wrap items-end gap-3 mb-5 p-4 bg-white border border-slate-200 rounded-xl">
+        <CalendarRange size={16} className="text-slate-400 mb-2 hidden sm:block" />
+        <div>
+          <label className="block text-xs font-medium text-slate-500 mb-1">Desde</label>
+          <input
+            type="date"
+            value={dateFrom}
+            max={dateTo || toDateStr(new Date())}
+            onChange={e => setDateFrom(e.target.value)}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-500 mb-1">Hasta</label>
+          <input
+            type="date"
+            value={dateTo}
+            min={dateFrom || undefined}
+            max={toDateStr(new Date())}
+            onChange={e => setDateTo(e.target.value)}
+            className="border border-slate-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+          />
+        </div>
+        {hasFilter && (
+          <button
+            onClick={clearFilter}
+            className="flex items-center gap-1.5 px-3 py-2 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg hover:bg-slate-50 transition-colors"
+          >
+            <X size={14} />
+            Limpiar
+          </button>
+        )}
+      </div>
+
+      {filtered.length === 0 ? (
         <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
-          Todavía no hay respuestas para esta encuesta.
+          {responses.length === 0
+            ? 'Todavía no hay respuestas para esta encuesta.'
+            : 'Sin respuestas en el rango de fechas seleccionado.'}
         </div>
       ) : (
         <div className="bg-white rounded-xl border border-slate-200 overflow-x-auto">
@@ -114,13 +191,13 @@ export default function RespuestasPage() {
               </tr>
             </thead>
             <tbody>
-              {responses.map((resp) => {
+              {filtered.map((resp) => {
                 const answerMap = Object.fromEntries(
                   (resp.survey_answers ?? []).map(a => [a.question_id, a.value])
                 )
                 return (
                   <tr key={resp.id} className="hover:bg-slate-50 transition-colors">
-                    <td className="sticky left-0 bg-white px-4 py-3 border-b border-slate-50 text-slate-600 whitespace-nowrap group-hover:bg-slate-50">
+                    <td className="sticky left-0 bg-white px-4 py-3 border-b border-slate-50 text-slate-600 whitespace-nowrap">
                       {formatDate(resp.completed_at)}
                     </td>
                     <td className="px-4 py-3 border-b border-slate-50 text-slate-500">{resp.var1 ?? <span className="text-slate-300">—</span>}</td>

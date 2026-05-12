@@ -217,10 +217,11 @@ function AnnouncementDisplay({ question }: { question: SurveyQuestion }) {
 }
 
 function SuccessScreen({ survey, onRedirect }: { survey: Survey; onRedirect: () => void }) {
-  const [countdown, setCountdown] = useState(survey.thanks_duration_seconds ?? null)
+  const [countdown, setCountdown] = useState<number | null>(survey.thanks_duration_seconds ?? null)
 
   useEffect(() => {
-    if (!survey.redirect_url || !countdown) return
+    // Solo auto-redirige si hay URL y duración configurada
+    if (!survey.redirect_url || countdown === null) return
     if (countdown <= 0) { onRedirect(); return }
     const t = setTimeout(() => setCountdown(c => (c ?? 1) - 1), 1000)
     return () => clearTimeout(t)
@@ -232,8 +233,17 @@ function SuccessScreen({ survey, onRedirect }: { survey: Survey; onRedirect: () 
         <h2 className="text-3xl font-bold text-gray-800">{survey.thanks_title}</h2>
         <p className="text-gray-600 leading-relaxed max-w-lg mx-auto">{survey.thanks_body}</p>
       </div>
-      {countdown !== null && survey.redirect_url && (
-        <p className="text-sm text-gray-400">Redirigiendo en {countdown}s…</p>
+      {survey.redirect_url && (
+        countdown !== null ? (
+          <p className="text-sm text-gray-400">Redirigiendo en {countdown}s…</p>
+        ) : (
+          <button
+            onClick={onRedirect}
+            className="mt-2 px-8 py-3 rounded-xl font-semibold bg-[#7A288A] hover:bg-[#5e1e6b] text-white shadow-md shadow-purple-200 transition-all"
+          >
+            Continuar →
+          </button>
+        )
       )}
     </div>
   )
