@@ -166,7 +166,7 @@ export function defaultBuilderState(): BuilderState {
     footerText: `Sus respuestas son anónimas y se utilizarán únicamente para mejorar nuestros servicios. ${new Date().getFullYear()} Frávega`,
     questions: [],
     slug: '',
-    status: 'paused',
+    status: 'active',
     closeAt: '',
     thanksTitle: '¡Gracias por tu participación!',
     thanksBody: 'Tu opinión es fundamental para ayudarnos a mejorar nuestros servicios.',

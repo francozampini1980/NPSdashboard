@@ -115,10 +115,10 @@ export default function EncuestasPage() {
           </Link>
         </div>
       ) : (
-        <div className="bg-white rounded-xl border border-slate-200 overflow-hidden">
+        <div className="bg-white rounded-xl border border-slate-200">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-100">
+              <tr className="border-b border-slate-100 [&>th:first-child]:rounded-tl-xl [&>th:last-child]:rounded-tr-xl">
                 <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-5 py-3">Nombre</th>
                 <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-5 py-3">Estado</th>
                 <th className="text-left text-xs font-semibold text-slate-500 uppercase tracking-wide px-5 py-3">Respuestas</th>
