@@ -68,21 +68,22 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
 
   if (surveyError) return NextResponse.json({ error: surveyError.message }, { status: 500 })
 
-  // Replace questions: delete all, re-insert
-  await supabase.from('survey_questions').delete().eq('survey_id', id)
-
-  if (questions && questions.length > 0) {
-    const rows = questions.map((q: Record<string, unknown>, i: number) => ({
-      survey_id: id,
-      position: i,
-      type: q.type,
-      question: q.question,
-      required: q.required,
-      config: q.config,
-      logic: q.logic,
-    }))
-    const { error: qError } = await supabase.from('survey_questions').insert(rows)
-    if (qError) return NextResponse.json({ error: qError.message }, { status: 500 })
+  // Solo reemplaza preguntas si el body las incluye explícitamente
+  if (Array.isArray(questions)) {
+    await supabase.from('survey_questions').delete().eq('survey_id', id)
+    if (questions.length > 0) {
+      const rows = questions.map((q: Record<string, unknown>, i: number) => ({
+        survey_id: id,
+        position: i,
+        type: q.type,
+        question: q.question,
+        required: q.required,
+        config: q.config,
+        logic: q.logic,
+      }))
+      const { error: qError } = await supabase.from('survey_questions').insert(rows)
+      if (qError) return NextResponse.json({ error: qError.message }, { status: 500 })
+    }
   }
 
   return NextResponse.json(survey)

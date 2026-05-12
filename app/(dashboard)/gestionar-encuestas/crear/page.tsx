@@ -91,7 +91,22 @@ function CrearEncuestaInner() {
     setSaving(true)
 
     try {
-      const imageUrl = await uploadImage()
+      // Upload image con timeout de 10s
+      let imageUrl: string | null = state.headerImageUrl
+      if (state.headerImageFile) {
+        try {
+          const uploaded = await Promise.race([
+            uploadImage(),
+            new Promise<null>((_, reject) =>
+              setTimeout(() => reject(new Error('Tiempo de carga de imagen agotado')), 10_000)
+            ),
+          ])
+          imageUrl = uploaded
+        } catch {
+          // Continúa sin imagen si falla el upload
+          imageUrl = null
+        }
+      }
 
       const payload = {
         name: state.name.trim(),
@@ -108,24 +123,37 @@ function CrearEncuestaInner() {
         questions: state.questions,
       }
 
-      const res = await fetch(
-        editingId ? `/api/surveys/${editingId}` : '/api/surveys',
-        {
-          method: editingId ? 'PUT' : 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload),
-        }
-      )
+      const controller = new AbortController()
+      const timer = setTimeout(() => controller.abort(), 20_000)
+
+      let res: Response
+      try {
+        res = await fetch(
+          editingId ? `/api/surveys/${editingId}` : '/api/surveys',
+          {
+            method: editingId ? 'PUT' : 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+            signal: controller.signal,
+          }
+        )
+      } finally {
+        clearTimeout(timer)
+      }
 
       if (!res.ok) {
-        const err = await res.json()
+        const err = await res.json().catch(() => ({ error: `Error HTTP ${res.status}` }))
         throw new Error(err.error ?? 'Error al guardar')
       }
 
+      // Redirect al listado
+      setSaving(false)
       router.push('/gestionar-encuestas/encuestas')
     } catch (e) {
-      setError((e as Error).message)
-    } finally {
+      const msg = (e as Error).name === 'AbortError'
+        ? 'La solicitud tardó demasiado. Intentá de nuevo.'
+        : (e as Error).message
+      setError(msg)
       setSaving(false)
     }
   }
