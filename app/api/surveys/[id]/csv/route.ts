@@ -26,11 +26,16 @@ function escapeCsv(val: unknown): string {
 }
 
 // GET /api/surveys/[id]/csv
-export async function GET(_req: Request, { params }: { params: Promise<{ id: string }> }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
   const supabase = await makeSupabase()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+
+  // Date filter from query params
+  const { searchParams } = new URL(req.url)
+  const from = searchParams.get('from') // YYYY-MM-DD
+  const to = searchParams.get('to')     // YYYY-MM-DD
 
   // Load survey + questions
   const { data: survey, error: sErr } = await supabase
@@ -45,12 +50,17 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     (a, b) => (a.position as number) - (b.position as number)
   )
 
-  // Load responses + answers
-  const { data: responses, error: rErr } = await supabase
+  // Load responses + answers (with optional date range)
+  let query = supabase
     .from('survey_responses')
     .select('*, survey_answers(*)')
     .eq('survey_id', id)
     .order('completed_at', { ascending: true })
+
+  if (from) query = query.gte('completed_at', `${from}T00:00:00.000Z`)
+  if (to)   query = query.lte('completed_at', `${to}T23:59:59.999Z`)
+
+  const { data: responses, error: rErr } = await query
 
   if (rErr) return NextResponse.json({ error: rErr.message }, { status: 500 })
 
