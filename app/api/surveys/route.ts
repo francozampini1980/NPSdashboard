@@ -33,21 +33,29 @@ export async function GET() {
 
   const { data, error } = await supabase
     .from('surveys')
-    .select(`
-      *,
-      survey_responses(count),
-      profiles!surveys_created_by_fkey(email)
-    `)
+    .select('*, survey_responses(count)')
     .order('created_at', { ascending: false })
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 
+  // Fetch creator emails from profiles (separate query — no FK to profiles exists)
+  const creatorIds = [...new Set((data ?? []).map((s: Record<string, unknown>) => s.created_by as string).filter(Boolean))]
+  const emailMap: Record<string, string> = {}
+  if (creatorIds.length > 0) {
+    const { data: profiles } = await supabase
+      .from('profiles')
+      .select('id, email')
+      .in('id', creatorIds)
+    for (const p of profiles ?? []) {
+      emailMap[(p as Record<string, string>).id] = (p as Record<string, string>).email
+    }
+  }
+
   const surveys = (data ?? []).map((s: Record<string, unknown>) => ({
     ...s,
     response_count: (s.survey_responses as { count: number }[])?.[0]?.count ?? 0,
-    creator_email: (s.profiles as { email: string } | null)?.email ?? null,
+    creator_email: emailMap[s.created_by as string] ?? null,
     survey_responses: undefined,
-    profiles: undefined,
   }))
 
   return NextResponse.json(surveys)
