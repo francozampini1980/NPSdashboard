@@ -53,13 +53,6 @@ export default function EncuestasPage() {
 
   useEffect(() => { load() }, [load])
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handler = () => setOpenMenu(null)
-    document.addEventListener('click', handler)
-    return () => document.removeEventListener('click', handler)
-  }, [])
-
   async function toggleStatus(survey: SurveyListItem) {
     const newStatus = survey.status === 'active' ? 'paused' : 'active'
     await fetch(`/api/surveys/${survey.id}`, {
@@ -98,6 +91,11 @@ export default function EncuestasPage() {
           Nueva encuesta
         </Link>
       </div>
+
+      {/* Overlay transparente para cerrar dropdown al click afuera */}
+      {openMenu && (
+        <div className="fixed inset-0 z-40" onClick={() => setOpenMenu(null)} />
+      )}
 
       {loading ? (
         <div className="flex items-center justify-center py-20 text-slate-400 text-sm">
@@ -154,7 +152,7 @@ export default function EncuestasPage() {
                   </td>
                   <td className="px-5 py-4">
                     {/* 3-dot menu */}
-                    <div className="relative" onClick={(e) => e.stopPropagation()}>
+                    <div className="relative">
                       <button
                         onClick={() => setOpenMenu(openMenu === s.id ? null : s.id)}
                         className="p-1.5 rounded-lg hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors"
@@ -163,7 +161,7 @@ export default function EncuestasPage() {
                       </button>
 
                       {openMenu === s.id && (
-                        <div className="absolute right-0 top-8 z-10 w-52 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-sm">
+                        <div className="absolute right-0 top-8 z-50 w-52 bg-white rounded-xl shadow-lg border border-slate-100 py-1 text-sm">
                           <button
                             onClick={() => { router.push(`/gestionar-encuestas/encuestas/${s.id}/respuestas`); setOpenMenu(null) }}
                             className="flex items-center gap-2.5 w-full px-4 py-2.5 hover:bg-slate-50 text-slate-700 transition-colors"
