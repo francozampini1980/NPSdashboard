@@ -22,7 +22,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     <div className="flex min-h-screen">
       <Sidebar collapsed={collapsed} onToggle={toggle} />
       <main
-        className={`flex-1 min-h-screen bg-[#F8FAFC] transition-all duration-200 ${
+        className={`flex-1 min-w-0 min-h-screen overflow-x-hidden bg-[#F8FAFC] transition-all duration-200 ${
           collapsed ? 'ml-16' : 'ml-64'
         }`}
       >

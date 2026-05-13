@@ -428,13 +428,16 @@ export default function SurveyPage() {
       {/* Header — logo */}
       <header className="w-full flex justify-center py-6 mb-4">
         {survey?.header_image_url ? (
-          <img
-            src={survey.header_image_url}
-            alt="Logo"
-            className="h-8 sm:h-12 w-auto max-w-[200px] object-contain"
-          />
+          <div className="h-10 sm:h-14 flex items-center justify-center">
+            <img
+              src={survey.header_image_url}
+              alt="Logo"
+              className="h-full max-h-full max-w-[220px] object-contain"
+              style={{ width: 'auto', display: 'block' }}
+            />
+          </div>
         ) : (
-          <div className="h-8 sm:h-12" />
+          <div className="h-10 sm:h-14" />
         )}
       </header>
 
