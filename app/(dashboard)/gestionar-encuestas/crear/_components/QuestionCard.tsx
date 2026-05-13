@@ -1,6 +1,6 @@
 'use client'
 
-import { ChevronUp, ChevronDown, Trash2 } from 'lucide-react'
+import { ChevronUp, ChevronDown, Trash2, Scissors } from 'lucide-react'
 import type { BuilderQuestion, QuestionType } from '@/types/survey'
 import NPSEditor from './question-editors/NPSEditor'
 import ReactionEditor from './question-editors/ReactionEditor'
@@ -16,6 +16,7 @@ const TYPE_LABELS: Record<QuestionType, string> = {
   single_choice: 'Opción única',
   multiple_choice: 'Varias opciones',
   announcement: 'Comunicado',
+  divisor: 'Divisor',
 }
 
 interface Props {
@@ -29,9 +30,49 @@ interface Props {
   onDelete: () => void
 }
 
+// Shared move/delete controls
+function CardControls({ index, total, onMoveUp, onMoveDown, onDelete }: {
+  index: number; total: number
+  onMoveUp: () => void; onMoveDown: () => void; onDelete: () => void
+}) {
+  return (
+    <div className="flex items-center gap-1">
+      <button type="button" onClick={onMoveUp} disabled={index === 0}
+        className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-colors">
+        <ChevronUp size={15} />
+      </button>
+      <button type="button" onClick={onMoveDown} disabled={index === total - 1}
+        className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-colors">
+        <ChevronDown size={15} />
+      </button>
+      <button type="button" onClick={onDelete}
+        className="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors">
+        <Trash2 size={15} />
+      </button>
+    </div>
+  )
+}
+
 export default function QuestionCard({
   question, index, total, allQuestions, onChange, onMoveUp, onMoveDown, onDelete
 }: Props) {
+
+  // ---- Divisor: compact inline render ----
+  if (question.type === 'divisor') {
+    return (
+      <div className="relative flex items-center gap-3 py-1">
+        <div className="flex-1 border-t-2 border-dashed border-purple-300" />
+        <div className="flex items-center gap-1.5 shrink-0 bg-purple-50 border border-purple-200 rounded-lg px-2 py-1">
+          <Scissors size={13} className="text-purple-400" />
+          <span className="text-xs font-semibold text-purple-500">Divisor de página</span>
+          <CardControls index={index} total={total} onMoveUp={onMoveUp} onMoveDown={onMoveDown} onDelete={onDelete} />
+        </div>
+        <div className="flex-1 border-t-2 border-dashed border-purple-300" />
+      </div>
+    )
+  }
+
+  // ---- Standard question card ----
   return (
     <div className="bg-white border border-slate-200 rounded-xl overflow-hidden">
       {/* Card header */}
@@ -42,31 +83,7 @@ export default function QuestionCard({
             {TYPE_LABELS[question.type]}
           </span>
         </div>
-        <div className="flex items-center gap-1">
-          <button
-            type="button"
-            onClick={onMoveUp}
-            disabled={index === 0}
-            className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-colors"
-          >
-            <ChevronUp size={15} />
-          </button>
-          <button
-            type="button"
-            onClick={onMoveDown}
-            disabled={index === total - 1}
-            className="p-1.5 rounded hover:bg-slate-100 text-slate-400 hover:text-slate-600 disabled:opacity-30 transition-colors"
-          >
-            <ChevronDown size={15} />
-          </button>
-          <button
-            type="button"
-            onClick={onDelete}
-            className="p-1.5 rounded hover:bg-red-50 text-slate-400 hover:text-red-500 transition-colors"
-          >
-            <Trash2 size={15} />
-          </button>
-        </div>
+        <CardControls index={index} total={total} onMoveUp={onMoveUp} onMoveDown={onMoveDown} onDelete={onDelete} />
       </div>
 
       {/* Editor body */}

@@ -13,13 +13,14 @@ interface Props {
 }
 
 const QUESTION_TYPES: { type: QuestionType; label: string; desc: string }[] = [
-  { type: 'nps',             label: 'NPS',           desc: 'Escala 0–10 con lógica por segmento' },
-  { type: 'reaction',        label: 'Reacción',      desc: 'Escala 1–5 (números, caritas o estrellas)' },
-  { type: 'short_text',      label: 'Texto corto',   desc: 'Input de hasta 80 caracteres' },
-  { type: 'long_text',       label: 'Texto largo',   desc: 'Textarea de hasta 500 caracteres' },
-  { type: 'single_choice',   label: 'Opción única',  desc: 'Radio buttons' },
+  { type: 'nps',             label: 'NPS',             desc: 'Escala 0–10 con lógica por segmento' },
+  { type: 'reaction',        label: 'Reacción',        desc: 'Escala 1–5 (números, caritas o estrellas)' },
+  { type: 'short_text',      label: 'Texto corto',     desc: 'Input de hasta 80 caracteres' },
+  { type: 'long_text',       label: 'Texto largo',     desc: 'Textarea de hasta 500 caracteres' },
+  { type: 'single_choice',   label: 'Opción única',    desc: 'Radio buttons' },
   { type: 'multiple_choice', label: 'Varias opciones', desc: 'Checkboxes con máximo configurable' },
-  { type: 'announcement',    label: 'Comunicado',    desc: 'Texto informativo sin respuesta' },
+  { type: 'announcement',    label: 'Comunicado',      desc: 'Texto informativo sin respuesta' },
+  { type: 'divisor',         label: 'Divisor',         desc: 'Separa la encuesta en páginas distintas' },
 ]
 
 export default function Step2Questions({ state, onChange }: Props) {
@@ -34,7 +35,7 @@ export default function Step2Questions({ state, onChange }: Props) {
       id: uuidv4(),
       type,
       question: defaultQuestionText[type] ?? '',
-      required: type !== 'announcement',
+      required: type !== 'announcement' && type !== 'divisor',
       config: defaultConfig(type),
       logic: defaultLogic(type),
     }

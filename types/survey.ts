@@ -10,6 +10,7 @@ export type QuestionType =
   | 'single_choice'
   | 'multiple_choice'
   | 'announcement'
+  | 'divisor'
 
 export type SurveyStatus = 'active' | 'paused'
 
@@ -200,4 +201,9 @@ export function defaultLogic(type: QuestionType): QuestionLogic {
     default:
       return { default: 'next' } as DefaultLogic
   }
+}
+
+/** Returns true if the question is structural (not a real question the user answers) */
+export function isStructural(type: QuestionType): boolean {
+  return type === 'divisor'
 }

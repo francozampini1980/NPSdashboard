@@ -249,29 +249,23 @@ function SuccessScreen({ survey, onRedirect }: { survey: Survey; onRedirect: () 
   )
 }
 
-// ---- Logic resolver ----
+// ---- Logic resolver (single-question mode) ----
 
 function resolveNext(
   question: SurveyQuestion,
   value: unknown,
   questions: SurveyQuestion[]
 ): string | 'end' | 'next' {
-  const logic = question.logic as Record<string, LogicTarget>
-
   if (question.type === 'nps') {
     const npsLogic = question.logic as NPSLogic
     const v = value as number
-    const target = v <= 6 ? npsLogic.detractors : v <= 8 ? npsLogic.neutrals : npsLogic.promoters
-    return target
+    return v <= 6 ? npsLogic.detractors : v <= 8 ? npsLogic.neutrals : npsLogic.promoters
   }
-
   if (question.type === 'reaction') {
     const rLogic = question.logic as ReactionLogic
     const v = value as number
-    const target = v <= 2 ? rLogic.negative : v === 3 ? rLogic.neutral : rLogic.positive
-    return target
+    return v <= 2 ? rLogic.negative : v === 3 ? rLogic.neutral : rLogic.positive
   }
-
   return (question.logic as DefaultLogic).default ?? 'next'
 }
 
@@ -282,17 +276,92 @@ function getNextQuestionIndex(
 ): number | null {
   const q = questions[current]
   const target = resolveNext(q, answers[q.id], questions)
-
   if (target === 'end') return null
   if (target === 'next') return current + 1 < questions.length ? current + 1 : null
-
   const idx = questions.findIndex(x => x.id === target)
   return idx >= 0 ? idx : null
+}
+
+// ---- Page builder (divisor mode) ----
+
+/** Groups questions into pages separated by divisors. Divisors are not included in pages. */
+function buildPages(qs: SurveyQuestion[]): SurveyQuestion[][] {
+  const pages: SurveyQuestion[][] = []
+  let current: SurveyQuestion[] = []
+  for (const q of qs) {
+    if (q.type === 'divisor') {
+      if (current.length > 0) { pages.push(current); current = [] }
+    } else {
+      current.push(q)
+    }
+  }
+  if (current.length > 0) pages.push(current)
+  return pages.length > 0 ? pages : []
 }
 
 // ---- Shuffle helper ----
 function shuffleArray<T>(arr: T[]): T[] {
   return [...arr].sort(() => Math.random() - 0.5)
+}
+
+// ---- Shared question renderer ----
+
+function QuestionRenderer({ question, value, shuffled, onChange }: {
+  question: SurveyQuestion
+  value: unknown
+  shuffled: string[]
+  onChange: (v: unknown) => void
+}) {
+  if (question.type === 'nps') return (
+    <NPSQuestion question={question} value={(value as number) ?? null} onChange={onChange as (v: number) => void} />
+  )
+  if (question.type === 'reaction') return (
+    <ReactionQuestion question={question} value={(value as number) ?? null} onChange={onChange as (v: number) => void} />
+  )
+  if (question.type === 'short_text') return (
+    <ShortTextQuestion question={question} value={(value as string) ?? ''} onChange={onChange as (v: string) => void} />
+  )
+  if (question.type === 'long_text') return (
+    <LongTextQuestion question={question} value={(value as string) ?? ''} onChange={onChange as (v: string) => void} />
+  )
+  if (question.type === 'single_choice') return (
+    <SingleChoiceQuestion question={question} value={(value as number) ?? null} onChange={onChange as (v: number) => void} shuffled={shuffled} />
+  )
+  if (question.type === 'multiple_choice') return (
+    <MultipleChoiceQuestion question={question} value={(value as number[]) ?? []} onChange={onChange as (v: number[]) => void} shuffled={shuffled} />
+  )
+  if (question.type === 'announcement') return <AnnouncementDisplay question={question} />
+  return null
+}
+
+// ---- Shared nav buttons ----
+
+function NavButtons({ canGoBack, canAdvance, isLast, submitting, onBack, onNext }: {
+  canGoBack: boolean
+  canAdvance: boolean
+  isLast: boolean
+  submitting: boolean
+  onBack: () => void
+  onNext: () => void
+}) {
+  return (
+    <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between gap-3">
+      <button
+        onClick={onBack}
+        disabled={!canGoBack}
+        className="px-6 py-3 rounded-lg font-semibold border-2 border-[#7A288A] text-[#7A288A] hover:bg-purple-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+      >
+        Atrás
+      </button>
+      <button
+        onClick={onNext}
+        disabled={!canAdvance || submitting}
+        className="px-6 py-3 rounded-lg font-semibold bg-[#7A288A] hover:bg-[#5e1e6b] text-white shadow-md shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+      >
+        {submitting ? 'Enviando…' : isLast ? 'Enviar' : 'Siguiente'}
+      </button>
+    </div>
+  )
 }
 
 // ---- Main page ----
@@ -306,9 +375,14 @@ export default function SurveyPage() {
 
   const [survey, setSurvey] = useState<Survey | null>(null)
   const [questions, setQuestions] = useState<SurveyQuestion[]>([])
+  const [pages, setPages] = useState<SurveyQuestion[][]>([])         // divisor mode
+  const [hasDivisors, setHasDivisors] = useState(false)
   const [shuffledOptions, setShuffledOptions] = useState<Record<string, string[]>>({})
+  // Single-question mode state
   const [currentIdx, setCurrentIdx] = useState(0)
   const [history, setHistory] = useState<number[]>([])
+  // Page mode state
+  const [currentPageIdx, setCurrentPageIdx] = useState(0)
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
   const [status, setStatus] = useState<'loading' | 'not_found' | 'closed' | 'active' | 'success'>('loading')
   const [submitting, setSubmitting] = useState(false)
@@ -324,6 +398,11 @@ export default function SurveyPage() {
         const qs = (data.survey_questions ?? []) as SurveyQuestion[]
         setQuestions(qs)
 
+        // Detect divisors → page mode
+        const usesPages = qs.some(q => q.type === 'divisor')
+        setHasDivisors(usesPages)
+        if (usesPages) setPages(buildPages(qs))
+
         // Pre-shuffle choice options
         const opts: Record<string, string[]> = {}
         for (const q of qs) {
@@ -338,7 +417,8 @@ export default function SurveyPage() {
       .catch(() => setStatus('not_found'))
   }, [slug])
 
-  const currentQuestion = questions[currentIdx]
+  // ---- Single-question mode helpers ----
+  const currentQuestion = !hasDivisors ? questions[currentIdx] : null
   const currentValue = currentQuestion ? answers[currentQuestion.id] : undefined
 
   function isAnswered(): boolean {
@@ -353,46 +433,91 @@ export default function SurveyPage() {
   }
 
   function handleAnswer(value: unknown) {
-    setAnswers(prev => ({ ...prev, [currentQuestion.id]: value }))
+    if (currentQuestion) setAnswers(prev => ({ ...prev, [currentQuestion.id]: value }))
   }
 
+  // ---- Page mode helpers ----
+  const currentPage = hasDivisors ? (pages[currentPageIdx] ?? []) : []
+
+  function isPageAnswered(): boolean {
+    return currentPage.every(q => {
+      if (q.type === 'announcement' || !q.required) return true
+      const v = answers[q.id]
+      if (v === null || v === undefined) return false
+      if (typeof v === 'string') return v.trim().length > 0
+      if (Array.isArray(v)) return v.length > 0
+      return true
+    })
+  }
+
+  function handlePageAnswer(qid: string, value: unknown) {
+    setAnswers(prev => ({ ...prev, [qid]: value }))
+  }
+
+  // ---- Submit ----
+  async function submitAnswers() {
+    setSubmitting(true)
+    const nonDivisorQs = questions.filter(q => q.type !== 'divisor')
+    const answerPayload = Object.entries(answers)
+      .filter(([qid]) => nonDivisorQs.find(q => q.id === qid))
+      .map(([question_id, value]) => ({ question_id, value }))
+
+    await fetch(`/api/surveys/${survey!.id}/responses`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ var1, var2, var3, answers: answerPayload }),
+    })
+    setSubmitting(false)
+    setStatus('success')
+  }
+
+  // ---- Navigation ----
   async function handleNext() {
-    const nextIdx = getNextQuestionIndex(currentIdx, questions, answers)
-
-    if (nextIdx === null) {
-      // Submit
-      setSubmitting(true)
-      const answerPayload = Object.entries(answers)
-        .filter(([qid]) => questions.find(q => q.id === qid))
-        .map(([question_id, value]) => ({ question_id, value }))
-
-      await fetch(`/api/surveys/${survey!.id}/responses`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ var1, var2, var3, answers: answerPayload }),
-      })
-      setSubmitting(false)
-      setStatus('success')
+    if (hasDivisors) {
+      // Page mode: advance page or submit
+      if (currentPageIdx < pages.length - 1) {
+        setCurrentPageIdx(p => p + 1)
+      } else {
+        await submitAnswers()
+      }
     } else {
-      setHistory(prev => [...prev, currentIdx])
-      setCurrentIdx(nextIdx)
+      // Single-question mode
+      const nextIdx = getNextQuestionIndex(currentIdx, questions, answers)
+      if (nextIdx === null) {
+        await submitAnswers()
+      } else {
+        setHistory(prev => [...prev, currentIdx])
+        setCurrentIdx(nextIdx)
+      }
     }
   }
 
   function handleBack() {
-    if (history.length === 0) return
-    const prev = history[history.length - 1]
-    setHistory(h => h.slice(0, -1))
-    setCurrentIdx(prev)
+    if (hasDivisors) {
+      if (currentPageIdx > 0) setCurrentPageIdx(p => p - 1)
+    } else {
+      if (history.length === 0) return
+      const prev = history[history.length - 1]
+      setHistory(h => h.slice(0, -1))
+      setCurrentIdx(prev)
+    }
   }
 
   function handleRedirect() {
     if (survey?.redirect_url) window.location.href = survey.redirect_url
   }
 
-  const progress = questions.length > 0
-    ? Math.round(((currentIdx) / questions.length) * 100)
-    : 0
+  // ---- Progress ----
+  const progress = hasDivisors
+    ? (pages.length > 0 ? Math.round((currentPageIdx / pages.length) * 100) : 0)
+    : (questions.length > 0 ? Math.round((currentIdx / questions.length) * 100) : 0)
+
+  // ---- Can advance? ----
+  const canAdvance = hasDivisors ? isPageAnswered() : isAnswered()
+  const isLastStep = hasDivisors
+    ? currentPageIdx === pages.length - 1
+    : getNextQuestionIndex(currentIdx, questions, answers) === null
+  const canGoBack = hasDivisors ? currentPageIdx > 0 : history.length > 0
 
   // ---- Renders ----
 
@@ -456,77 +581,61 @@ export default function SurveyPage() {
         <div className="p-6 sm:p-10">
           {status === 'success' ? (
             <SuccessScreen survey={survey!} onRedirect={handleRedirect} />
-          ) : currentQuestion ? (
-            <div className="space-y-8">
-              {/* Question renderer */}
-              {currentQuestion.type === 'nps' && (
-                <NPSQuestion
-                  question={currentQuestion}
-                  value={(currentValue as number) ?? null}
-                  onChange={handleAnswer}
+          ) : hasDivisors ? (
+            /* ---- PAGE MODE: show all questions of current page ---- */
+            currentPage.length > 0 ? (
+              <div className="space-y-10">
+                {currentPage.map(q => (
+                  <QuestionRenderer
+                    key={q.id}
+                    question={q}
+                    value={answers[q.id]}
+                    shuffled={shuffledOptions[q.id] ?? (
+                      (q.type === 'single_choice' || q.type === 'multiple_choice')
+                        ? (q.config as ChoiceConfig).options
+                        : []
+                    )}
+                    onChange={v => handlePageAnswer(q.id, v)}
+                  />
+                ))}
+                <NavButtons
+                  canGoBack={canGoBack}
+                  canAdvance={canAdvance}
+                  isLast={isLastStep}
+                  submitting={submitting}
+                  onBack={handleBack}
+                  onNext={handleNext}
                 />
-              )}
-              {currentQuestion.type === 'reaction' && (
-                <ReactionQuestion
-                  question={currentQuestion}
-                  value={(currentValue as number) ?? null}
-                  onChange={handleAnswer}
-                />
-              )}
-              {currentQuestion.type === 'short_text' && (
-                <ShortTextQuestion
-                  question={currentQuestion}
-                  value={(currentValue as string) ?? ''}
-                  onChange={handleAnswer}
-                />
-              )}
-              {currentQuestion.type === 'long_text' && (
-                <LongTextQuestion
-                  question={currentQuestion}
-                  value={(currentValue as string) ?? ''}
-                  onChange={handleAnswer}
-                />
-              )}
-              {currentQuestion.type === 'single_choice' && (
-                <SingleChoiceQuestion
-                  question={currentQuestion}
-                  value={(currentValue as number) ?? null}
-                  onChange={handleAnswer}
-                  shuffled={shuffledOptions[currentQuestion.id] ?? (currentQuestion.config as ChoiceConfig).options}
-                />
-              )}
-              {currentQuestion.type === 'multiple_choice' && (
-                <MultipleChoiceQuestion
-                  question={currentQuestion}
-                  value={(currentValue as number[]) ?? []}
-                  onChange={handleAnswer}
-                  shuffled={shuffledOptions[currentQuestion.id] ?? (currentQuestion.config as ChoiceConfig).options}
-                />
-              )}
-              {currentQuestion.type === 'announcement' && (
-                <AnnouncementDisplay question={currentQuestion} />
-              )}
-
-              {/* Buttons */}
-              <div className="pt-4 flex flex-col-reverse sm:flex-row justify-between gap-3">
-                <button
-                  onClick={handleBack}
-                  disabled={history.length === 0}
-                  className="px-6 py-3 rounded-lg font-semibold border-2 border-[#7A288A] text-[#7A288A] hover:bg-purple-50 disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                >
-                  Atrás
-                </button>
-                <button
-                  onClick={handleNext}
-                  disabled={!isAnswered() || submitting}
-                  className="px-6 py-3 rounded-lg font-semibold bg-[#7A288A] hover:bg-[#5e1e6b] text-white shadow-md shadow-purple-200 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-                >
-                  {submitting ? 'Enviando…' : getNextQuestionIndex(currentIdx, questions, answers) === null ? 'Enviar' : 'Siguiente'}
-                </button>
               </div>
-            </div>
+            ) : (
+              <p className="text-gray-400 text-center py-10">Esta encuesta no tiene preguntas.</p>
+            )
           ) : (
-            <p className="text-gray-400 text-center py-10">Esta encuesta no tiene preguntas.</p>
+            /* ---- SINGLE-QUESTION MODE (original behavior) ---- */
+            currentQuestion ? (
+              <div className="space-y-8">
+                <QuestionRenderer
+                  question={currentQuestion}
+                  value={currentValue}
+                  shuffled={shuffledOptions[currentQuestion.id] ?? (
+                    (currentQuestion.type === 'single_choice' || currentQuestion.type === 'multiple_choice')
+                      ? (currentQuestion.config as ChoiceConfig).options
+                      : []
+                  )}
+                  onChange={handleAnswer}
+                />
+                <NavButtons
+                  canGoBack={canGoBack}
+                  canAdvance={canAdvance}
+                  isLast={isLastStep}
+                  submitting={submitting}
+                  onBack={handleBack}
+                  onNext={handleNext}
+                />
+              </div>
+            ) : (
+              <p className="text-gray-400 text-center py-10">Esta encuesta no tiene preguntas.</p>
+            )
           )}
         </div>
       </div>
