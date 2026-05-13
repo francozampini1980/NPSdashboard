@@ -307,6 +307,10 @@ function shuffleArray<T>(arr: T[]): T[] {
 
 // ---- Shared question renderer ----
 
+function scrollDown() {
+  setTimeout(() => window.scrollBy({ top: 320, behavior: 'smooth' }), 80)
+}
+
 function QuestionRenderer({ question, value, shuffled, onChange }: {
   question: SurveyQuestion
   value: unknown
@@ -314,10 +318,18 @@ function QuestionRenderer({ question, value, shuffled, onChange }: {
   onChange: (v: unknown) => void
 }) {
   if (question.type === 'nps') return (
-    <NPSQuestion question={question} value={(value as number) ?? null} onChange={onChange as (v: number) => void} />
+    <NPSQuestion
+      question={question}
+      value={(value as number) ?? null}
+      onChange={v => { onChange(v); scrollDown() }}
+    />
   )
   if (question.type === 'reaction') return (
-    <ReactionQuestion question={question} value={(value as number) ?? null} onChange={onChange as (v: number) => void} />
+    <ReactionQuestion
+      question={question}
+      value={(value as number) ?? null}
+      onChange={v => { onChange(v); scrollDown() }}
+    />
   )
   if (question.type === 'short_text') return (
     <ShortTextQuestion question={question} value={(value as string) ?? ''} onChange={onChange as (v: string) => void} />
@@ -326,11 +338,28 @@ function QuestionRenderer({ question, value, shuffled, onChange }: {
     <LongTextQuestion question={question} value={(value as string) ?? ''} onChange={onChange as (v: string) => void} />
   )
   if (question.type === 'single_choice') return (
-    <SingleChoiceQuestion question={question} value={(value as number) ?? null} onChange={onChange as (v: number) => void} shuffled={shuffled} />
+    <SingleChoiceQuestion
+      question={question}
+      value={(value as number) ?? null}
+      shuffled={shuffled}
+      onChange={v => { onChange(v); scrollDown() }}
+    />
   )
-  if (question.type === 'multiple_choice') return (
-    <MultipleChoiceQuestion question={question} value={(value as number[]) ?? []} onChange={onChange as (v: number[]) => void} shuffled={shuffled} />
-  )
+  if (question.type === 'multiple_choice') {
+    const config = question.config as ChoiceConfig
+    const max = config.max_selections ?? shuffled.length
+    return (
+      <MultipleChoiceQuestion
+        question={question}
+        value={(value as number[]) ?? []}
+        shuffled={shuffled}
+        onChange={v => {
+          onChange(v)
+          if ((v as number[]).length >= max) scrollDown()
+        }}
+      />
+    )
+  }
   if (question.type === 'announcement') return <AnnouncementDisplay question={question} />
   return null
 }
@@ -585,20 +614,23 @@ export default function SurveyPage() {
           ) : hasDivisors ? (
             /* ---- PAGE MODE: show all questions of current page ---- */
             currentPage.length > 0 ? (
-              <div className="space-y-10">
-                {currentPage.map(q => (
-                  <QuestionRenderer
-                    key={q.id}
-                    question={q}
-                    value={answers[q.id]}
-                    shuffled={shuffledOptions[q.id] ?? (
-                      (q.type === 'single_choice' || q.type === 'multiple_choice')
-                        ? (q.config as ChoiceConfig).options
-                        : []
-                    )}
-                    onChange={v => handlePageAnswer(q.id, v)}
-                  />
+              <div>
+                {currentPage.map((q, i) => (
+                  <div key={q.id}>
+                    {i > 0 && <hr className="border-gray-100 my-[25px]" />}
+                    <QuestionRenderer
+                      question={q}
+                      value={answers[q.id]}
+                      shuffled={shuffledOptions[q.id] ?? (
+                        (q.type === 'single_choice' || q.type === 'multiple_choice')
+                          ? (q.config as ChoiceConfig).options
+                          : []
+                      )}
+                      onChange={v => handlePageAnswer(q.id, v)}
+                    />
+                  </div>
                 ))}
+                <hr className="border-gray-100 my-[25px]" />
                 <NavButtons
                   canGoBack={canGoBack}
                   canAdvance={canAdvance}
