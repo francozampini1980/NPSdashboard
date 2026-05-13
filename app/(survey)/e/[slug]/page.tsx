@@ -275,6 +275,7 @@ function getNextQuestionIndex(
   answers: Record<string, unknown>
 ): number | null {
   const q = questions[current]
+  if (!q) return null  // safety guard — questions may be empty during initial render
   const target = resolveNext(q, answers[q.id], questions)
   if (target === 'end') return null
   if (target === 'next') return current + 1 < questions.length ? current + 1 : null
