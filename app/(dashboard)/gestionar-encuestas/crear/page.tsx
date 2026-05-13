@@ -67,20 +67,18 @@ function CrearEncuestaInner() {
     return true
   }
 
-  async function uploadImage(): Promise<string | null> {
-    if (!state.headerImageFile) return state.headerImageUrl
-
+  async function uploadImage(): Promise<string> {
     const supabase = createBrowserClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     )
-    const ext = state.headerImageFile.name.split('.').pop()
+    const ext = state.headerImageFile!.name.split('.').pop()
     const path = `headers/${Date.now()}.${ext}`
     const { error } = await supabase.storage
       .from('survey-assets')
-      .upload(path, state.headerImageFile, { upsert: true })
+      .upload(path, state.headerImageFile!, { upsert: true })
 
-    if (error) return null
+    if (error) throw new Error(`Error al subir imagen: ${error.message}`)
 
     const { data } = supabase.storage.from('survey-assets').getPublicUrl(path)
     return data.publicUrl
@@ -91,21 +89,15 @@ function CrearEncuestaInner() {
     setSaving(true)
 
     try {
-      // Upload image con timeout de 10s
+      // Upload image con timeout de 30s
       let imageUrl: string | null = state.headerImageUrl
       if (state.headerImageFile) {
-        try {
-          const uploaded = await Promise.race([
-            uploadImage(),
-            new Promise<null>((_, reject) =>
-              setTimeout(() => reject(new Error('Tiempo de carga de imagen agotado')), 10_000)
-            ),
-          ])
-          imageUrl = uploaded
-        } catch {
-          // Continúa sin imagen si falla el upload
-          imageUrl = null
-        }
+        imageUrl = await Promise.race([
+          uploadImage(),
+          new Promise<never>((_, reject) =>
+            setTimeout(() => reject(new Error('La imagen tardó demasiado en subir. Por favor, intentá de nuevo.')), 30_000)
+          ),
+        ])
       }
 
       const payload = {
