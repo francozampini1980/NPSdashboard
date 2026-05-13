@@ -2,7 +2,6 @@
 
 import { useEffect, useState, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { createBrowserClient } from '@supabase/ssr'
 import type { BuilderState } from '@/types/survey'
 import { defaultBuilderState } from '@/types/survey'
 import Step1Info from './_components/Step1Info'
@@ -68,20 +67,21 @@ function CrearEncuestaInner() {
   }
 
   async function uploadImage(): Promise<string> {
-    const supabase = createBrowserClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-    )
-    const ext = state.headerImageFile!.name.split('.').pop()
-    const path = `headers/${Date.now()}.${ext}`
-    const { error } = await supabase.storage
-      .from('survey-assets')
-      .upload(path, state.headerImageFile!, { upsert: true })
+    const formData = new FormData()
+    formData.append('file', state.headerImageFile!)
 
-    if (error) throw new Error(`Error al subir imagen: ${error.message}`)
+    const res = await fetch('/api/surveys/upload-header', {
+      method: 'POST',
+      body: formData,
+    })
 
-    const { data } = supabase.storage.from('survey-assets').getPublicUrl(path)
-    return data.publicUrl
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({ error: `HTTP ${res.status}` }))
+      throw new Error(`Error al subir imagen: ${err.error ?? res.statusText}`)
+    }
+
+    const { url } = await res.json()
+    return url
   }
 
   async function handleSave() {
