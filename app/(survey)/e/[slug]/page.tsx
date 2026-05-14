@@ -425,6 +425,7 @@ export default function SurveyPage() {
   const [history, setHistory] = useState<number[]>([])
   // Page mode state
   const [currentPageIdx, setCurrentPageIdx] = useState(0)
+  const [pageHistory, setPageHistory] = useState<number[]>([])
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
   const [status, setStatus] = useState<'loading' | 'not_found' | 'closed' | 'active' | 'success'>('loading')
   const [submitting, setSubmitting] = useState(false)
@@ -514,7 +515,7 @@ export default function SurveyPage() {
   }
 
   // ---- Navigation ----
-  /** Resolve the page to jump to based on a divisor's logic target */
+  /** Resolve the page to jump to based on a logic target */
   function resolvePageTarget(target: LogicTarget): number | 'submit' {
     if (target === 'end') return 'submit'
     if (target === 'next') {
@@ -535,21 +536,33 @@ export default function SurveyPage() {
     return currentPageIdx < pages.length - 1 ? currentPageIdx + 1 : 'submit'
   }
 
+  /**
+   * Compute the effective jump target for the current page.
+   * Priority: answered question logic → divisor default logic.
+   */
+  function computePageTarget(): LogicTarget {
+    // 1. Question-level routing takes precedence (e.g. NPS branching)
+    for (const q of currentPage) {
+      const qAnswer = answers[q.id]
+      if (qAnswer === undefined || qAnswer === null) continue
+      const qTarget = resolveNext(q, qAnswer)
+      if (qTarget !== 'next') return qTarget
+    }
+    // 2. Fall back to the divisor that follows this page
+    const divisors = questions.filter(q => q.type === 'divisor')
+    const div = divisors[currentPageIdx]
+    if (div) return (div.logic as DefaultLogic).default ?? 'next'
+    return 'next'
+  }
+
   async function handleNext() {
     if (hasDivisors) {
-      // Find the divisor that follows the current page and apply its logic
-      const divisors = questions.filter(q => q.type === 'divisor')
-      const divisorAfterPage = divisors[currentPageIdx]   // divisors[0] separates page 0 from page 1
-
-      let target: LogicTarget = 'next'
-      if (divisorAfterPage) {
-        target = (divisorAfterPage.logic as DefaultLogic).default ?? 'next'
-      }
-
+      const target = computePageTarget()
       const destination = resolvePageTarget(target)
       if (destination === 'submit') {
         await submitAnswers()
       } else {
+        setPageHistory(prev => [...prev, currentPageIdx])
         setCurrentPageIdx(destination)
       }
     } else {
@@ -566,7 +579,10 @@ export default function SurveyPage() {
 
   function handleBack() {
     if (hasDivisors) {
-      if (currentPageIdx > 0) setCurrentPageIdx(p => p - 1)
+      if (pageHistory.length === 0) return
+      const prev = pageHistory[pageHistory.length - 1]
+      setPageHistory(h => h.slice(0, -1))
+      setCurrentPageIdx(prev)
     } else {
       if (history.length === 0) return
       const prev = history[history.length - 1]
@@ -587,9 +603,9 @@ export default function SurveyPage() {
   // ---- Can advance? ----
   const canAdvance = hasDivisors ? isPageAnswered() : isAnswered()
   const isLastStep = hasDivisors
-    ? currentPageIdx === pages.length - 1
+    ? resolvePageTarget(computePageTarget()) === 'submit'
     : getNextQuestionIndex(currentIdx, questions, answers) === null
-  const canGoBack = hasDivisors ? currentPageIdx > 0 : history.length > 0
+  const canGoBack = hasDivisors ? pageHistory.length > 0 : history.length > 0
 
   // ---- Renders ----
 
