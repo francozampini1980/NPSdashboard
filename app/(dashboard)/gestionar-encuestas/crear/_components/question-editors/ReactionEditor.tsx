@@ -1,6 +1,7 @@
 'use client'
 
 import type { ReactionConfig, ReactionLogic, BuilderQuestion } from '@/types/survey'
+import { buildLogicTargets } from './logic-targets'
 
 interface Props {
   question: BuilderQuestion
@@ -14,19 +15,10 @@ const DISPLAYS = [
   { value: 'stars',   label: 'Estrellas ★' },
 ]
 
-const LOGIC_TARGETS = (qs: BuilderQuestion[], currentId: string) => [
-  { value: 'next', label: 'Siguiente pregunta' },
-  { value: 'end',  label: 'Fin de encuesta' },
-  ...qs.filter(q => q.id !== currentId).map(q => ({
-    value: q.id,
-    label: q.question || 'Pregunta sin título',
-  })),
-]
-
 export default function ReactionEditor({ question, onChange, allQuestions }: Props) {
   const config = question.config as ReactionConfig
   const logic = question.logic as ReactionLogic
-  const targets = LOGIC_TARGETS(allQuestions, question.id)
+  const targets = buildLogicTargets(allQuestions, question.id)
 
   function setConfig(patch: Partial<ReactionConfig>) {
     onChange({ ...question, config: { ...config, ...patch } })

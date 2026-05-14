@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from 'react'
 import { useParams, useSearchParams } from 'next/navigation'
 import type { Survey, SurveyQuestion, QuestionType } from '@/types/survey'
-import type { NPSConfig, ReactionConfig, ChoiceConfig, AnnouncementConfig, NPSLogic, ReactionLogic, DefaultLogic, LogicTarget } from '@/types/survey'
+import type { NPSConfig, ReactionConfig, ChoiceConfig, AnnouncementConfig, NPSLogic, ReactionLogic, SingleChoiceLogic, DefaultLogic, LogicTarget } from '@/types/survey'
 
 // ---- Question renderers ----
 
@@ -254,17 +254,29 @@ function SuccessScreen({ survey, onRedirect }: { survey: Survey; onRedirect: () 
 function resolveNext(
   question: SurveyQuestion,
   value: unknown,
-  questions: SurveyQuestion[]
-): string | 'end' | 'next' {
+): LogicTarget {
   if (question.type === 'nps') {
-    const npsLogic = question.logic as NPSLogic
+    const l = question.logic as NPSLogic
     const v = value as number
-    return v <= 6 ? npsLogic.detractors : v <= 8 ? npsLogic.neutrals : npsLogic.promoters
+    return v <= 6 ? l.detractors : v <= 8 ? l.neutrals : l.promoters
   }
   if (question.type === 'reaction') {
-    const rLogic = question.logic as ReactionLogic
+    const l = question.logic as ReactionLogic
     const v = value as number
-    return v <= 2 ? rLogic.negative : v === 3 ? rLogic.neutral : rLogic.positive
+    return v <= 2 ? l.negative : v === 3 ? l.neutral : l.positive
+  }
+  if (question.type === 'single_choice') {
+    const l = question.logic as SingleChoiceLogic | DefaultLogic
+    if ('options' in l && l.options) {
+      const config = question.config as ChoiceConfig
+      // Only use per-option logic when options are NOT randomized
+      if (!config.randomize) {
+        const target = l.options[String(value as number)]
+        if (target) return target
+      }
+      return l.default ?? 'next'
+    }
+    return (l as DefaultLogic).default ?? 'next'
   }
   return (question.logic as DefaultLogic).default ?? 'next'
 }
@@ -276,7 +288,7 @@ function getNextQuestionIndex(
 ): number | null {
   const q = questions[current]
   if (!q) return null  // safety guard — questions may be empty during initial render
-  const target = resolveNext(q, answers[q.id], questions)
+  const target = resolveNext(q, answers[q.id])
   if (target === 'end') return null
   if (target === 'next') return current + 1 < questions.length ? current + 1 : null
   const idx = questions.findIndex(x => x.id === target)
@@ -502,13 +514,43 @@ export default function SurveyPage() {
   }
 
   // ---- Navigation ----
+  /** Resolve the page to jump to based on a divisor's logic target */
+  function resolvePageTarget(target: LogicTarget): number | 'submit' {
+    if (target === 'end') return 'submit'
+    if (target === 'next') {
+      return currentPageIdx < pages.length - 1 ? currentPageIdx + 1 : 'submit'
+    }
+    // Is target a question UUID? → find which page contains it
+    for (let pi = 0; pi < pages.length; pi++) {
+      if (pages[pi].some(q => q.id === target)) return pi
+    }
+    // Is target a divisor UUID? → jump to page after that divisor
+    const divisors = questions.filter(q => q.type === 'divisor')
+    const divIdx = divisors.findIndex(d => d.id === target)
+    if (divIdx >= 0) {
+      const targetPage = divIdx + 1
+      return targetPage < pages.length ? targetPage : 'submit'
+    }
+    // Fallback
+    return currentPageIdx < pages.length - 1 ? currentPageIdx + 1 : 'submit'
+  }
+
   async function handleNext() {
     if (hasDivisors) {
-      // Page mode: advance page or submit
-      if (currentPageIdx < pages.length - 1) {
-        setCurrentPageIdx(p => p + 1)
-      } else {
+      // Find the divisor that follows the current page and apply its logic
+      const divisors = questions.filter(q => q.type === 'divisor')
+      const divisorAfterPage = divisors[currentPageIdx]   // divisors[0] separates page 0 from page 1
+
+      let target: LogicTarget = 'next'
+      if (divisorAfterPage) {
+        target = (divisorAfterPage.logic as DefaultLogic).default ?? 'next'
+      }
+
+      const destination = resolvePageTarget(target)
+      if (destination === 'submit') {
         await submitAnswers()
+      } else {
+        setCurrentPageIdx(destination)
       }
     } else {
       // Single-question mode

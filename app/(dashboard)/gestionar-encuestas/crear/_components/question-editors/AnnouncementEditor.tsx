@@ -1,6 +1,7 @@
 'use client'
 
 import type { AnnouncementConfig, DefaultLogic, BuilderQuestion } from '@/types/survey'
+import { buildLogicTargets } from './logic-targets'
 
 interface Props {
   question: BuilderQuestion
@@ -8,19 +9,10 @@ interface Props {
   allQuestions: BuilderQuestion[]
 }
 
-const LOGIC_TARGETS = (qs: BuilderQuestion[], currentId: string) => [
-  { value: 'next', label: 'Siguiente pregunta' },
-  { value: 'end',  label: 'Fin de encuesta' },
-  ...qs.filter(q => q.id !== currentId).map(q => ({
-    value: q.id,
-    label: q.question || 'Pregunta sin título',
-  })),
-]
-
 export default function AnnouncementEditor({ question, onChange, allQuestions }: Props) {
   const config = question.config as AnnouncementConfig
   const logic = question.logic as DefaultLogic
-  const targets = LOGIC_TARGETS(allQuestions, question.id)
+  const targets = buildLogicTargets(allQuestions, question.id)
 
   return (
     <div className="space-y-4">

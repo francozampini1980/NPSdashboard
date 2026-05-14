@@ -1,7 +1,8 @@
 'use client'
 
 import { ChevronUp, ChevronDown, Trash2, Scissors } from 'lucide-react'
-import type { BuilderQuestion, QuestionType } from '@/types/survey'
+import type { BuilderQuestion, DefaultLogic, QuestionType } from '@/types/survey'
+import { buildDivisorTargets } from './question-editors/logic-targets'
 import NPSEditor from './question-editors/NPSEditor'
 import ReactionEditor from './question-editors/ReactionEditor'
 import TextEditor from './question-editors/TextEditor'
@@ -57,17 +58,36 @@ export default function QuestionCard({
   question, index, total, allQuestions, onChange, onMoveUp, onMoveDown, onDelete
 }: Props) {
 
-  // ---- Divisor: compact inline render ----
+  // ---- Divisor: compact card with logic editor ----
   if (question.type === 'divisor') {
+    const divLogic = question.logic as DefaultLogic
+    const targets = buildDivisorTargets(allQuestions, question.id)
+
     return (
-      <div className="relative flex items-center gap-3 py-1">
-        <div className="flex-1 border-t-2 border-dashed border-purple-300" />
-        <div className="flex items-center gap-1.5 shrink-0 bg-purple-50 border border-purple-200 rounded-lg px-2 py-1">
-          <Scissors size={13} className="text-purple-400" />
-          <span className="text-xs font-semibold text-purple-500">Divisor de página</span>
+      <div className="border border-purple-200 bg-purple-50/40 rounded-xl overflow-hidden">
+        {/* Header strip */}
+        <div className="flex items-center gap-3 px-4 py-2">
+          <div className="flex-1 border-t-2 border-dashed border-purple-300" />
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Scissors size={13} className="text-purple-400" />
+            <span className="text-xs font-semibold text-purple-500">Divisor de página</span>
+          </div>
+          <div className="flex-1 border-t-2 border-dashed border-purple-300" />
           <CardControls index={index} total={total} onMoveUp={onMoveUp} onMoveDown={onMoveDown} onDelete={onDelete} />
         </div>
-        <div className="flex-1 border-t-2 border-dashed border-purple-300" />
+        {/* Logic */}
+        <div className="px-4 pb-3 border-t border-purple-100">
+          <div className="flex items-center gap-3 mt-2">
+            <label className="text-xs text-slate-500 shrink-0">Al completar esta página ir a…</label>
+            <select
+              className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white"
+              value={divLogic.default ?? 'next'}
+              onChange={e => onChange({ ...question, logic: { default: e.target.value } })}
+            >
+              {targets.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+        </div>
       </div>
     )
   }

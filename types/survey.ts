@@ -65,7 +65,13 @@ export interface DefaultLogic {
   default: LogicTarget
 }
 
-export type QuestionLogic = NPSLogic | ReactionLogic | DefaultLogic | Record<string, never>
+/** Per-option logic for single_choice. Keys are option indices (as strings). */
+export interface SingleChoiceLogic {
+  options: Record<string, LogicTarget>
+  default: LogicTarget
+}
+
+export type QuestionLogic = NPSLogic | ReactionLogic | SingleChoiceLogic | DefaultLogic | Record<string, never>
 
 // ---- Question ----
 
@@ -198,6 +204,8 @@ export function defaultLogic(type: QuestionType): QuestionLogic {
       return { detractors: 'next', neutrals: 'next', promoters: 'next' } as NPSLogic
     case 'reaction':
       return { negative: 'next', neutral: 'next', positive: 'next' } as ReactionLogic
+    case 'single_choice':
+      return { options: {}, default: 'next' } as SingleChoiceLogic
     default:
       return { default: 'next' } as DefaultLogic
   }

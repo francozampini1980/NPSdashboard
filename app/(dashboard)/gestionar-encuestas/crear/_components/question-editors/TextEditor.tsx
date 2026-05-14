@@ -1,6 +1,7 @@
 'use client'
 
 import type { DefaultLogic, BuilderQuestion } from '@/types/survey'
+import { buildLogicTargets } from './logic-targets'
 
 interface Props {
   question: BuilderQuestion
@@ -9,18 +10,9 @@ interface Props {
   variant: 'short_text' | 'long_text'
 }
 
-const LOGIC_TARGETS = (qs: BuilderQuestion[], currentId: string) => [
-  { value: 'next', label: 'Siguiente pregunta' },
-  { value: 'end',  label: 'Fin de encuesta' },
-  ...qs.filter(q => q.id !== currentId).map(q => ({
-    value: q.id,
-    label: q.question || 'Pregunta sin título',
-  })),
-]
-
 export default function TextEditor({ question, onChange, allQuestions, variant }: Props) {
   const logic = question.logic as DefaultLogic
-  const targets = LOGIC_TARGETS(allQuestions, question.id)
+  const targets = buildLogicTargets(allQuestions, question.id)
   const maxChars = variant === 'short_text' ? 80 : 500
 
   return (

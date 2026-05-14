@@ -1,7 +1,8 @@
 'use client'
 
 import { Plus, X } from 'lucide-react'
-import type { ChoiceConfig, DefaultLogic, BuilderQuestion } from '@/types/survey'
+import type { ChoiceConfig, DefaultLogic, SingleChoiceLogic, BuilderQuestion, LogicTarget } from '@/types/survey'
+import { buildLogicTargets } from './logic-targets'
 
 interface Props {
   question: BuilderQuestion
@@ -10,19 +11,25 @@ interface Props {
   variant: 'single_choice' | 'multiple_choice'
 }
 
-const LOGIC_TARGETS = (qs: BuilderQuestion[], currentId: string) => [
-  { value: 'next', label: 'Siguiente pregunta' },
-  { value: 'end',  label: 'Fin de encuesta' },
-  ...qs.filter(q => q.id !== currentId).map(q => ({
-    value: q.id,
-    label: q.question || 'Pregunta sin título',
-  })),
-]
-
 export default function ChoiceEditor({ question, onChange, allQuestions, variant }: Props) {
   const config = question.config as ChoiceConfig
-  const logic = question.logic as DefaultLogic
-  const targets = LOGIC_TARGETS(allQuestions, question.id)
+  const targets = buildLogicTargets(allQuestions, question.id)
+
+  // ---- Single choice: per-option logic ----
+  const scLogic: SingleChoiceLogic = variant === 'single_choice'
+    ? (() => {
+        const raw = question.logic as Partial<SingleChoiceLogic>
+        // Migrate from old DefaultLogic format
+        const base = ('options' in raw && raw.options) ? raw : { options: {}, default: raw.default ?? 'next' }
+        // Ensure every option index has an entry
+        const options: Record<string, LogicTarget> = { ...base.options }
+        config.options.forEach((_, i) => { if (!(String(i) in options)) options[String(i)] = 'next' })
+        return { options, default: base.default ?? 'next' }
+      })()
+    : { options: {}, default: 'next' }
+
+  // ---- Multiple choice: single default logic ----
+  const mcLogic = question.logic as DefaultLogic
 
   function setConfig(patch: Partial<ChoiceConfig>) {
     onChange({ ...question, config: { ...config, ...patch } })
@@ -34,14 +41,37 @@ export default function ChoiceEditor({ question, onChange, allQuestions, variant
     setConfig({ options })
   }
 
+  function setOptionLogic(i: number, target: string) {
+    const newOptions = { ...scLogic.options, [String(i)]: target as LogicTarget }
+    onChange({ ...question, logic: { ...scLogic, options: newOptions } })
+  }
+
   function addOption() {
-    setConfig({ options: [...config.options, `Opción ${config.options.length + 1}`] })
+    const newIdx = config.options.length
+    setConfig({ options: [...config.options, `Opción ${newIdx + 1}`] })
+    if (variant === 'single_choice') {
+      onChange({
+        ...question,
+        config: { ...config, options: [...config.options, `Opción ${newIdx + 1}`] },
+        logic: { ...scLogic, options: { ...scLogic.options, [String(newIdx)]: 'next' as LogicTarget } },
+      })
+    }
   }
 
   function removeOption(i: number) {
     if (config.options.length <= 1) return
-    const options = config.options.filter((_, idx) => idx !== i)
-    setConfig({ options })
+    const newOptions = config.options.filter((_, idx) => idx !== i)
+    if (variant === 'single_choice') {
+      // Reindex logic options
+      const newLogicOptions: Record<string, LogicTarget> = {}
+      newOptions.forEach((_, newIdx) => {
+        const oldIdx = newIdx >= i ? newIdx + 1 : newIdx
+        newLogicOptions[String(newIdx)] = scLogic.options[String(oldIdx)] ?? 'next'
+      })
+      onChange({ ...question, config: { ...config, options: newOptions }, logic: { ...scLogic, options: newLogicOptions } })
+    } else {
+      setConfig({ options: newOptions })
+    }
   }
 
   return (
@@ -127,18 +157,43 @@ export default function ChoiceEditor({ question, onChange, allQuestions, variant
       </label>
 
       {/* Logic */}
-      <div className="border-t border-slate-100 pt-4">
-        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Lógica de salto</p>
-        <div className="flex items-center gap-3">
-          <label className="text-xs text-slate-600 shrink-0">Ir a…</label>
-          <select
-            className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
-            value={logic.default}
-            onChange={e => onChange({ ...question, logic: { default: e.target.value } })}
-          >
-            {targets.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-          </select>
-        </div>
+      <div className="border-t border-slate-100 pt-4 space-y-2">
+        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide">Lógica de salto</p>
+
+        {variant === 'single_choice' ? (
+          /* Per-option logic */
+          <>
+            {config.options.map((opt, i) => (
+              <div key={i} className="flex items-center gap-3">
+                <label className="text-xs text-slate-600 w-44 shrink-0 truncate">
+                  Si elige «{opt || `Opción ${i + 1}`}»…
+                </label>
+                <select
+                  className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  value={scLogic.options[String(i)] ?? 'next'}
+                  onChange={e => setOptionLogic(i, e.target.value)}
+                >
+                  {targets.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+                </select>
+              </div>
+            ))}
+            {config.randomize && (
+              <p className="text-xs text-amber-500">⚠ La lógica por opción se ignora cuando las opciones están aleatorizadas.</p>
+            )}
+          </>
+        ) : (
+          /* Single logic for multiple_choice */
+          <div className="flex items-center gap-3">
+            <label className="text-xs text-slate-600 shrink-0">Ir a…</label>
+            <select
+              className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+              value={mcLogic.default}
+              onChange={e => onChange({ ...question, logic: { default: e.target.value } })}
+            >
+              {targets.map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
+            </select>
+          </div>
+        )}
       </div>
     </div>
   )
