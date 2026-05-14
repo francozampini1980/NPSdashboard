@@ -27,7 +27,7 @@ export default function LoginPage() {
       setError('Email o contraseña incorrectos.')
       setLoading(false)
     } else {
-      router.push('/nps-post-compra')
+      router.push('/')
       router.refresh()
     }
   }

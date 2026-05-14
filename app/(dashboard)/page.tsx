@@ -123,10 +123,10 @@ function MetricPill({
       <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest leading-tight">
         {label}
       </p>
-      <div className="text-3xl font-extrabold mt-2" style={{ color }}>
+      <div className="text-5xl font-extrabold mt-2 leading-none" style={{ color }}>
         {score.toFixed(1)}
       </div>
-      <p className="text-[10px] text-slate-400">/ 5</p>
+      <p className="text-xs text-slate-400 mt-1">/ 5</p>
     </div>
   )
 }
