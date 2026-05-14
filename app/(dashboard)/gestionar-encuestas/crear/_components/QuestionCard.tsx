@@ -23,6 +23,7 @@ const TYPE_LABELS: Record<QuestionType, string> = {
 interface Props {
   question: BuilderQuestion
   index: number
+  questionNumber: number  // position among non-divisor questions (1-based)
   total: number
   allQuestions: BuilderQuestion[]
   onChange: (q: BuilderQuestion) => void
@@ -55,7 +56,7 @@ function CardControls({ index, total, onMoveUp, onMoveDown, onDelete }: {
 }
 
 export default function QuestionCard({
-  question, index, total, allQuestions, onChange, onMoveUp, onMoveDown, onDelete
+  question, index, questionNumber, total, allQuestions, onChange, onMoveUp, onMoveDown, onDelete
 }: Props) {
 
   // ---- Divisor: compact card with logic editor ----
@@ -98,7 +99,7 @@ export default function QuestionCard({
       {/* Card header */}
       <div className="flex items-center justify-between px-4 py-3 bg-slate-50 border-b border-slate-100">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-bold text-slate-400 w-5">{index + 1}.</span>
+          <span className="text-xs font-bold text-slate-400 w-5">{questionNumber}.</span>
           <span className="text-xs font-semibold text-[#7A288A] bg-purple-50 px-2 py-0.5 rounded-full">
             {TYPE_LABELS[question.type]}
           </span>

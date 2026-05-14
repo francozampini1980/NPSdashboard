@@ -75,19 +75,26 @@ export default function Step2Questions({ state, onChange }: Props) {
         </div>
       )}
 
-      {state.questions.map((q, i) => (
-        <QuestionCard
-          key={q.id}
-          question={q}
-          index={i}
-          total={state.questions.length}
-          allQuestions={state.questions}
-          onChange={(updated) => updateQuestion(i, updated)}
-          onMoveUp={() => moveUp(i)}
-          onMoveDown={() => moveDown(i)}
-          onDelete={() => deleteQuestion(i)}
-        />
-      ))}
+      {(() => {
+        let nonDivCount = 0
+        return state.questions.map((q, i) => {
+          if (q.type !== 'divisor') nonDivCount++
+          return (
+            <QuestionCard
+              key={q.id}
+              question={q}
+              index={i}
+              questionNumber={nonDivCount}
+              total={state.questions.length}
+              allQuestions={state.questions}
+              onChange={(updated) => updateQuestion(i, updated)}
+              onMoveUp={() => moveUp(i)}
+              onMoveDown={() => moveDown(i)}
+              onDelete={() => deleteQuestion(i)}
+            />
+          )
+        })
+      })()}
 
       {/* Add question */}
       <div className="relative">

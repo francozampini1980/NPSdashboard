@@ -10,17 +10,21 @@ export function buildLogicTargets(
   allQuestions: BuilderQuestion[],
   currentId: string,
 ): LogicOption[] {
-  let qNum = 0
-  const questionOptions: LogicOption[] = allQuestions
-    .filter(q => q.id !== currentId && q.type !== 'divisor')
-    .map(q => {
-      qNum++
-      const text = q.question?.trim()
-      const label = text
-        ? `${text.slice(0, 42)}${text.length > 42 ? '…' : ''}`
-        : `Pregunta ${qNum}`
-      return { value: q.id, label }
-    })
+  // Count through ALL non-divisor questions to preserve absolute numbering
+  // (same scheme as the card header: 1, 2, 3… skipping divisors)
+  let nonDivisorNum = 0
+  const questionOptions: LogicOption[] = []
+
+  for (const q of allQuestions) {
+    if (q.type === 'divisor') continue
+    nonDivisorNum++
+    if (q.id === currentId) continue  // skip self but keep the count
+    const text = q.question?.trim()
+    const label = text
+      ? `${text.slice(0, 42)}${text.length > 42 ? '…' : ''}`
+      : `Pregunta ${nonDivisorNum}`
+    questionOptions.push({ value: q.id, label })
+  }
 
   return [
     { value: 'next', label: 'Siguiente pregunta' },
