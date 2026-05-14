@@ -42,7 +42,7 @@ export async function middleware(request: NextRequest) {
 
   if (user && pathname === '/login') {
     const dashboardUrl = request.nextUrl.clone()
-    dashboardUrl.pathname = '/nps-post-compra'
+    dashboardUrl.pathname = '/'
     return NextResponse.redirect(dashboardUrl)
   }
 

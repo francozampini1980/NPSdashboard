@@ -14,6 +14,7 @@ import {
   LogOut,
   PlusCircle,
   ClipboardList,
+  LayoutDashboard,
 } from 'lucide-react'
 import { useAuth, type Role } from '@/lib/auth-context'
 
@@ -41,6 +42,12 @@ const navGroups: NavGroup[] = [
   {
     label: 'Dashboard',
     items: [
+      {
+        href: '/',
+        label: 'Resumen general',
+        icon: LayoutDashboard,
+        enabled: true,
+      },
       {
         href: '/nps-post-compra',
         label: 'NPS Post Compra',
@@ -203,7 +210,9 @@ export default function Sidebar({ collapsed, onToggle }: SidebarProps) {
                 }
 
                 const isActive =
-                  item.href === '/gestionar-encuestas/crear'
+                  item.href === '/'
+                    ? pathname === '/'
+                    : item.href === '/gestionar-encuestas/crear'
                     ? pathname === item.href || pathname.startsWith('/gestionar-encuestas/crear')
                     : pathname.startsWith(item.href)
 
