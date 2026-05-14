@@ -37,13 +37,13 @@ function top3Mentions(
 // Sub-components
 // ─────────────────────────────────────────────
 
-function HeroNPS({ nps, month }: { nps: number; month: string }) {
+function HeroNPS({ nps }: { nps: number }) {
   const color = getNPSColor(nps)
   const label = getNPSLabel(nps)
   return (
     <div className="bg-white rounded-xl border border-slate-200 p-6 flex flex-col items-center justify-center text-center min-h-[140px]">
       <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-1">
-        NPS Score · {formatMonthLabelFull(month)}
+        NPS Score
       </p>
       <div
         className="text-6xl font-extrabold leading-none mt-1"
@@ -111,13 +111,10 @@ function MentionsRanking({
 function MetricPill({
   label,
   score,
-  month,
 }: {
   label: string
   score: number
-  month: string
 }) {
-  // CES/CSAT score out of 5, use a neutral color scale
   const color =
     score >= 4 ? '#10B981' : score >= 3 ? '#F59E0B' : '#EF4444'
 
@@ -126,8 +123,7 @@ function MetricPill({
       <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-widest leading-tight">
         {label}
       </p>
-      <p className="text-[10px] text-slate-400">{formatMonthLabelFull(month)}</p>
-      <div className="text-3xl font-extrabold mt-1" style={{ color }}>
+      <div className="text-3xl font-extrabold mt-2" style={{ color }}>
         {score.toFixed(1)}
       </div>
       <p className="text-[10px] text-slate-400">/ 5</p>
@@ -185,11 +181,16 @@ function EvolutivePaginator({
   )
 }
 
-function SectionDivider({ title }: { title: string }) {
+function SectionDivider({ title, month }: { title: string; month?: string }) {
   return (
     <div className="flex items-center gap-3 mb-6">
       <div className="w-1 h-6 rounded-full bg-[#871ee3]" />
       <h2 className="text-lg font-bold text-slate-800">{title}</h2>
+      {month && (
+        <span className="text-sm text-slate-400 font-normal">
+          · Mes de {formatMonthLabelFull(month)}
+        </span>
+      )}
     </div>
   )
 }
@@ -296,7 +297,7 @@ export default function ResumenGeneralPage() {
       {/* MODULE 1 — NPS Post Compra        */}
       {/* ══════════════════════════════════ */}
       <section>
-        <SectionDivider title="NPS Post Compra" />
+        <SectionDivider title="NPS Post Compra" month={pcLatest?.month} />
 
         {pcError && (
           <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 mb-4">
@@ -313,7 +314,7 @@ export default function ResumenGeneralPage() {
           <div className="space-y-4">
             {/* Hero + mentions */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <HeroNPS nps={pcLatest.nps_score} month={pcLatest.month} />
+              <HeroNPS nps={pcLatest.nps_score} />
               <MentionsRanking
                 title="Top menciones positivas"
                 items={pcPositiveMentions}
@@ -355,7 +356,7 @@ export default function ResumenGeneralPage() {
       {/* MODULE 2 — NPS Post Entrega       */}
       {/* ══════════════════════════════════ */}
       <section>
-        <SectionDivider title="NPS Post Entrega" />
+        <SectionDivider title="NPS Post Entrega" month={peLatest?.month} />
 
         {peError && (
           <div className="flex items-start gap-3 bg-red-50 border border-red-200 rounded-xl p-4 text-red-700 mb-4">
@@ -373,27 +374,23 @@ export default function ResumenGeneralPage() {
             {/* NPS hero + metric pills */}
             <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
               <div className="col-span-2 md:col-span-1">
-                <HeroNPS nps={peLatest.nps_score} month={peLatest.month} />
+                <HeroNPS nps={peLatest.nps_score} />
               </div>
               <MetricPill
-                label="CES — Seguimiento del pedido"
+                label="Seguimiento del pedido"
                 score={peLatest.ces_score}
-                month={peLatest.month}
               />
               <MetricPill
-                label="CSAT — Puntualidad de la entrega"
+                label="Puntualidad de la entrega"
                 score={peLatest.csat_puntualidad_score}
-                month={peLatest.month}
               />
               <MetricPill
-                label="CSAT — Predisposición del transportista"
+                label="Predisposición del transportista"
                 score={peLatest.csat_predisposicion_score}
-                month={peLatest.month}
               />
               <MetricPill
-                label="CSAT — Condición del producto"
+                label="Condición del producto"
                 score={peLatest.csat_condicion_score}
-                month={peLatest.month}
               />
             </div>
 
