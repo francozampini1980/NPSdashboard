@@ -73,6 +73,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ id: stri
     await supabase.from('survey_questions').delete().eq('survey_id', id)
     if (questions.length > 0) {
       const rows = questions.map((q: Record<string, unknown>, i: number) => ({
+        id: q.id,        // preserve UUID so logic references remain valid after re-save
         survey_id: id,
         position: i,
         type: q.type,

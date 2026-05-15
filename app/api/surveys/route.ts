@@ -85,6 +85,7 @@ export async function POST(req: Request) {
 
   if (questions && questions.length > 0) {
     const rows = questions.map((q: Record<string, unknown>, i: number) => ({
+      id: q.id,          // preserve client-generated UUID so logic references match
       survey_id: survey.id,
       position: i,
       type: q.type,
