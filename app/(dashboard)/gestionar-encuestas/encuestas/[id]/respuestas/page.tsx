@@ -39,6 +39,12 @@ export default function RespuestasPage() {
 
   const [surveyName, setSurveyName] = useState('')
   const [questions, setQuestions] = useState<SurveyQuestion[]>([])
+
+  // Only answerable question types generate columns
+  const answerableQuestions = useMemo(
+    () => questions.filter(q => q.type !== 'divisor' && q.type !== 'announcement'),
+    [questions]
+  )
   const [responses, setResponses] = useState<Response[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -178,13 +184,13 @@ export default function RespuestasPage() {
                 <th className="text-left font-semibold text-slate-500 uppercase tracking-wide px-4 py-3 border-b border-slate-100 whitespace-nowrap">Var 1</th>
                 <th className="text-left font-semibold text-slate-500 uppercase tracking-wide px-4 py-3 border-b border-slate-100 whitespace-nowrap">Var 2</th>
                 <th className="text-left font-semibold text-slate-500 uppercase tracking-wide px-4 py-3 border-b border-slate-100 whitespace-nowrap">Var 3</th>
-                {questions.map(q => (
+                {answerableQuestions.map((q, qi) => (
                   <th
                     key={q.id}
                     className="text-left font-semibold text-slate-500 uppercase tracking-wide px-4 py-3 border-b border-slate-100 max-w-[180px]"
                   >
                     <span className="block truncate max-w-[160px]" title={q.question}>
-                      {q.question || `Pregunta ${q.position + 1}`}
+                      {q.question || `Pregunta ${qi + 1}`}
                     </span>
                   </th>
                 ))}
@@ -203,7 +209,7 @@ export default function RespuestasPage() {
                     <td className="px-4 py-3 border-b border-slate-50 text-slate-500">{resp.var1 ?? <span className="text-slate-300">—</span>}</td>
                     <td className="px-4 py-3 border-b border-slate-50 text-slate-500">{resp.var2 ?? <span className="text-slate-300">—</span>}</td>
                     <td className="px-4 py-3 border-b border-slate-50 text-slate-500">{resp.var3 ?? <span className="text-slate-300">—</span>}</td>
-                    {questions.map(q => (
+                    {answerableQuestions.map(q => (
                       <td key={q.id} className="px-4 py-3 border-b border-slate-50 text-slate-700 max-w-[180px]">
                         <span className="block truncate" title={formatValue(answerMap[q.id])}>
                           {formatValue(answerMap[q.id])}

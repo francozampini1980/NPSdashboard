@@ -46,9 +46,9 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   if (sErr) return NextResponse.json({ error: sErr.message }, { status: 404 })
 
-  const questions = ((survey.survey_questions ?? []) as Record<string, unknown>[]).sort(
-    (a, b) => (a.position as number) - (b.position as number)
-  )
+  const questions = ((survey.survey_questions ?? []) as Record<string, unknown>[])
+    .sort((a, b) => (a.position as number) - (b.position as number))
+    .filter((q) => q.type !== 'divisor' && q.type !== 'announcement')
 
   // Load responses + answers (with optional date range)
   let query = supabase
