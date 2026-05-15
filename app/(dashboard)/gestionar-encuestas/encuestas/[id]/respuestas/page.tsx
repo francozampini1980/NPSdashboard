@@ -22,9 +22,8 @@ function formatValue(value: unknown): string {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleString('es-AR', {
+  return new Date(iso).toLocaleDateString('es-AR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
-    hour: '2-digit', minute: '2-digit',
   })
 }
 
@@ -179,7 +178,7 @@ export default function RespuestasPage() {
             <thead>
               <tr>
                 <th className="sticky left-0 bg-white text-left font-semibold text-slate-500 uppercase tracking-wide px-4 py-3 border-b border-slate-100 whitespace-nowrap">
-                  Timestamp
+                  Fecha
                 </th>
                 <th className="text-left font-semibold text-slate-500 uppercase tracking-wide px-4 py-3 border-b border-slate-100 whitespace-nowrap">Var 1</th>
                 <th className="text-left font-semibold text-slate-500 uppercase tracking-wide px-4 py-3 border-b border-slate-100 whitespace-nowrap">Var 2</th>
