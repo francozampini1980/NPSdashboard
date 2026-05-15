@@ -12,6 +12,8 @@ import {
   Trash2,
   Play,
   Pause,
+  Link2,
+  Check,
 } from 'lucide-react'
 import type { SurveyListItem } from '@/types/survey'
 
@@ -43,6 +45,15 @@ export default function EncuestasPage() {
   const [loading, setLoading] = useState(true)
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const [deleting, setDeleting] = useState<string | null>(null)
+  const [copiedId, setCopiedId] = useState<string | null>(null)
+
+  function copyLink(slug: string, surveyId: string) {
+    const url = `${window.location.origin}/e/${slug}`
+    navigator.clipboard.writeText(url)
+    setCopiedId(surveyId)
+    setTimeout(() => setCopiedId(null), 2000)
+    setOpenMenu(null)
+  }
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -182,6 +193,15 @@ export default function EncuestasPage() {
                           >
                             <Pencil size={15} className="text-slate-400" />
                             Editar
+                          </button>
+                          <button
+                            onClick={() => copyLink(s.slug, s.id)}
+                            className="flex items-center gap-2.5 w-full px-4 py-2.5 hover:bg-slate-50 text-slate-700 transition-colors"
+                          >
+                            {copiedId === s.id
+                              ? <><Check size={15} className="text-emerald-500" /><span className="text-emerald-600">¡Link copiado!</span></>
+                              : <><Link2 size={15} className="text-slate-400" />Copiar link</>
+                            }
                           </button>
                           <button
                             onClick={() => { toggleStatus(s); setOpenMenu(null) }}
