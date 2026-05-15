@@ -40,7 +40,7 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
   // Load survey + questions
   const { data: survey, error: sErr } = await supabase
     .from('surveys')
-    .select('name, survey_questions(*)')
+    .select('name, var1_name, var2_name, var3_name, survey_questions(*)')
     .eq('id', id)
     .single()
 
@@ -64,13 +64,15 @@ export async function GET(req: Request, { params }: { params: Promise<{ id: stri
 
   if (rErr) return NextResponse.json({ error: rErr.message }, { status: 500 })
 
+  const sv = survey as Record<string, unknown>
+
   // Build CSV
   const headers = [
     'id',
     'timestamp',
-    'var1',
-    'var2',
-    'var3',
+    (sv.var1_name as string) || 'var1',
+    (sv.var2_name as string) || 'var2',
+    (sv.var3_name as string) || 'var3',
     ...questions.map((q) => (q.question as string) || `Pregunta ${q.position}`),
   ]
 

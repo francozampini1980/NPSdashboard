@@ -102,6 +102,9 @@ export interface Survey {
   thanks_body: string
   thanks_duration_seconds: number | null
   redirect_url: string | null
+  var1_name: string | null
+  var2_name: string | null
+  var3_name: string | null
   created_by: string | null
   created_at: string
   updated_at: string
@@ -162,6 +165,10 @@ export interface BuilderState {
   thanksBody: string
   thanksDuration: string  // seconds as string or ''
   redirectUrl: string
+  // Variables (optional URL params)
+  var1Name: string
+  var2Name: string
+  var3Name: string
 }
 
 export function defaultBuilderState(): BuilderState {
@@ -179,6 +186,9 @@ export function defaultBuilderState(): BuilderState {
     thanksBody: 'Tu opinión es fundamental para ayudarnos a mejorar nuestros servicios.',
     thanksDuration: '',
     redirectUrl: '',
+    var1Name: '',
+    var2Name: '',
+    var3Name: '',
   }
 }
 

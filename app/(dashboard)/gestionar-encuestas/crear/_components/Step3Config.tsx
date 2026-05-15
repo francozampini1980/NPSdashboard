@@ -12,13 +12,33 @@ interface Props {
 
 export default function Step3Config({ state, onChange, editingId }: Props) {
   const [copied, setCopied] = useState(false)
-  const surveyUrl = state.slug ? `${window.location.origin}/e/${state.slug}` : ''
+
+  const hasVars = !!(state.var1Name || state.var2Name || state.var3Name)
+  const [showVars, setShowVars] = useState(hasVars)
+
+  // Build URL including defined var names as placeholder params
+  function buildSurveyUrl() {
+    if (!state.slug) return ''
+    const base = `${window.location.origin}/e/${state.slug}`
+    const params = [state.var1Name, state.var2Name, state.var3Name]
+      .filter(Boolean)
+      .map(name => `${encodeURIComponent(name!)}=`)
+      .join('&')
+    return params ? `${base}?${params}` : base
+  }
+
+  const surveyUrl = buildSurveyUrl()
 
   function copyLink() {
     if (!surveyUrl) return
     navigator.clipboard.writeText(surveyUrl)
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  function toggleVars(checked: boolean) {
+    setShowVars(checked)
+    if (!checked) onChange({ var1Name: '', var2Name: '', var3Name: '' })
   }
 
   return (
@@ -55,6 +75,45 @@ export default function Step3Config({ state, onChange, editingId }: Props) {
               {copied ? <CheckCheck size={13} className="text-emerald-500" /> : <Copy size={13} />}
               {copied ? 'Copiado' : 'Copiar'}
             </button>
+          </div>
+        )}
+      </div>
+
+      {/* Variables */}
+      <div>
+        <label className="flex items-center gap-2.5 cursor-pointer select-none">
+          <input
+            type="checkbox"
+            checked={showVars}
+            onChange={e => toggleVars(e.target.checked)}
+            className="rounded border-slate-300 text-[#7A288A] focus:ring-purple-300"
+          />
+          <span className="text-sm font-semibold text-slate-700">Definir variables</span>
+        </label>
+        <p className="text-xs text-slate-400 mt-1 ml-6">
+          Parámetros de URL que se adjuntan a la encuesta y se guardan con cada respuesta.
+        </p>
+
+        {showVars && (
+          <div className="mt-3 ml-6 space-y-2">
+            {([
+              { key: 'var1Name' as const, label: 'Variable 1' },
+              { key: 'var2Name' as const, label: 'Variable 2' },
+              { key: 'var3Name' as const, label: 'Variable 3' },
+            ] as const).map(({ key, label }) => (
+              <div key={key} className="flex items-center gap-2">
+                <span className="text-xs text-slate-400 w-20 shrink-0">{label}</span>
+                <input
+                  className="flex-1 border border-slate-200 rounded-lg px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+                  value={state[key]}
+                  onChange={e => onChange({ [key]: e.target.value.replace(/\s/g, '_') })}
+                  placeholder={`ej: ${key === 'var1Name' ? 'cliente_id' : key === 'var2Name' ? 'sucursal' : 'canal'}`}
+                />
+              </div>
+            ))}
+            <p className="text-xs text-slate-400 pt-1">
+              Los espacios se reemplazan por guión bajo. El link de copia incluye las variables como parámetros vacíos.
+            </p>
           </div>
         )}
       </div>

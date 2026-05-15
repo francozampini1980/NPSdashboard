@@ -411,9 +411,10 @@ function NavButtons({ canGoBack, canAdvance, isLast, submitting, onBack, onNext 
 export default function SurveyPage() {
   const { slug } = useParams<{ slug: string }>()
   const searchParams = useSearchParams()
-  const var1 = searchParams.get('var1') ?? undefined
-  const var2 = searchParams.get('var2') ?? undefined
-  const var3 = searchParams.get('var3') ?? undefined
+  // Raw URL params — resolved to named params in submitAnswers when survey is loaded
+  const rawVar1 = searchParams.get('var1') ?? undefined
+  const rawVar2 = searchParams.get('var2') ?? undefined
+  const rawVar3 = searchParams.get('var3') ?? undefined
 
   const [survey, setSurvey] = useState<Survey | null>(null)
   const [questions, setQuestions] = useState<SurveyQuestion[]>([])
@@ -505,7 +506,13 @@ export default function SurveyPage() {
       .filter(([qid]) => nonDivisorQs.find(q => q.id === qid))
       .map(([question_id, value]) => ({ question_id, value }))
 
-    await fetch(`/api/surveys/${survey!.id}/responses`, {
+    // Resolve var values: use named param if configured, fallback to var1/var2/var3
+    const s = survey!
+    const var1 = (s.var1_name ? searchParams.get(s.var1_name) : null) ?? rawVar1 ?? null
+    const var2 = (s.var2_name ? searchParams.get(s.var2_name) : null) ?? rawVar2 ?? null
+    const var3 = (s.var3_name ? searchParams.get(s.var3_name) : null) ?? rawVar3 ?? null
+
+    await fetch(`/api/surveys/${s.id}/responses`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ var1, var2, var3, answers: answerPayload }),

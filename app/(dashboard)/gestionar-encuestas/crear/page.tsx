@@ -49,6 +49,9 @@ function CrearEncuestaInner() {
           thanksBody: data.thanks_body ?? '',
           thanksDuration: data.thanks_duration_seconds ? String(data.thanks_duration_seconds) : '',
           redirectUrl: data.redirect_url ?? '',
+          var1Name: data.var1_name ?? '',
+          var2Name: data.var2_name ?? '',
+          var3Name: data.var3_name ?? '',
         })
         setLoading(false)
       })
@@ -112,6 +115,9 @@ function CrearEncuestaInner() {
         thanks_body: state.thanksBody,
         thanks_duration_seconds: state.thanksDuration ? Number(state.thanksDuration) : null,
         redirect_url: state.redirectUrl.trim() || null,
+        var1_name: state.var1Name.trim() || null,
+        var2_name: state.var2Name.trim() || null,
+        var3_name: state.var3Name.trim() || null,
         questions: state.questions,
       }
 

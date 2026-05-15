@@ -37,6 +37,7 @@ export default function RespuestasPage() {
   const router = useRouter()
 
   const [surveyName, setSurveyName] = useState('')
+  const [varNames, setVarNames] = useState<[string, string, string]>(['Var 1', 'Var 2', 'Var 3'])
   const [questions, setQuestions] = useState<SurveyQuestion[]>([])
 
   // Only answerable question types generate columns
@@ -57,6 +58,11 @@ export default function RespuestasPage() {
       fetch(`/api/surveys/${id}/responses`).then(r => r.json()),
     ]).then(([survey, resps]) => {
       setSurveyName(survey.name ?? '')
+      setVarNames([
+        survey.var1_name || 'Var 1',
+        survey.var2_name || 'Var 2',
+        survey.var3_name || 'Var 3',
+      ])
       setQuestions((survey.survey_questions ?? []) as SurveyQuestion[])
       setResponses(resps ?? [])
       setLoading(false)
@@ -180,9 +186,11 @@ export default function RespuestasPage() {
                 <th className="sticky left-0 bg-white text-left font-semibold text-slate-500 uppercase tracking-wide px-4 py-3 border-b border-slate-100 whitespace-nowrap">
                   Fecha
                 </th>
-                <th className="text-left font-semibold text-slate-500 uppercase tracking-wide px-4 py-3 border-b border-slate-100 whitespace-nowrap">Var 1</th>
-                <th className="text-left font-semibold text-slate-500 uppercase tracking-wide px-4 py-3 border-b border-slate-100 whitespace-nowrap">Var 2</th>
-                <th className="text-left font-semibold text-slate-500 uppercase tracking-wide px-4 py-3 border-b border-slate-100 whitespace-nowrap">Var 3</th>
+                {varNames.map((name, i) => (
+                  <th key={i} className="text-left font-semibold text-slate-500 uppercase tracking-wide px-4 py-3 border-b border-slate-100 whitespace-nowrap">
+                    {name}
+                  </th>
+                ))}
                 {answerableQuestions.map((q, qi) => (
                   <th
                     key={q.id}
