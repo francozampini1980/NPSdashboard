@@ -52,6 +52,7 @@ function CrearEncuestaInner() {
           var1Name: data.var1_name ?? '',
           var2Name: data.var2_name ?? '',
           var3Name: data.var3_name ?? '',
+          allowMultipleResponses: data.allow_multiple_responses ?? false,
         })
         setLoading(false)
       })
@@ -118,6 +119,7 @@ function CrearEncuestaInner() {
         var1_name: state.var1Name.trim() || null,
         var2_name: state.var2Name.trim() || null,
         var3_name: state.var3Name.trim() || null,
+        allow_multiple_responses: state.allowMultipleResponses,
         questions: state.questions,
       }
 
@@ -180,25 +182,30 @@ function CrearEncuestaInner() {
 
       {/* Step tabs */}
       <div className="flex gap-0 mb-6 bg-slate-100 p-1 rounded-xl">
-        {STEPS.map((label, i) => (
-          <button
-            key={i}
-            type="button"
-            onClick={() => i < step + 1 && setStep(i)}
-            className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
-              step === i
-                ? 'bg-white shadow text-slate-800'
-                : i < step
-                  ? 'text-slate-500 hover:text-slate-700'
-                  : 'text-slate-400 cursor-not-allowed'
-            }`}
-          >
-            <span className={`mr-1.5 text-xs ${step > i ? 'text-emerald-500' : 'text-slate-400'}`}>
-              {step > i ? '✓' : `${i + 1}.`}
-            </span>
-            {label}
-          </button>
-        ))}
+        {STEPS.map((label, i) => {
+          // When editing: free navigation between all steps
+          // When creating: only allow navigating back to already-visited steps
+          const canClick = editingId ? true : i < step + 1
+          return (
+            <button
+              key={i}
+              type="button"
+              onClick={() => canClick && setStep(i)}
+              className={`flex-1 py-2 rounded-lg text-sm font-medium transition-all ${
+                step === i
+                  ? 'bg-white shadow text-slate-800'
+                  : canClick
+                    ? 'text-slate-500 hover:text-slate-700'
+                    : 'text-slate-400 cursor-not-allowed'
+              }`}
+            >
+              <span className={`mr-1.5 text-xs ${step > i ? 'text-emerald-500' : 'text-slate-400'}`}>
+                {step > i ? '✓' : `${i + 1}.`}
+              </span>
+              {label}
+            </button>
+          )
+        })}
       </div>
 
       {/* Progress bar */}

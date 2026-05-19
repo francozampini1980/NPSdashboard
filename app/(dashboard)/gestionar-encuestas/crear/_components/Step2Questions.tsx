@@ -125,6 +125,51 @@ export default function Step2Questions({ state, onChange }: Props) {
           </div>
         )}
       </div>
+
+      {/* Thanks page config */}
+      <div className="space-y-3 border-t border-slate-100 pt-5 mt-2">
+        <p className="text-sm font-semibold text-slate-700">Página de gracias</p>
+        <div>
+          <label className="block text-xs font-medium text-slate-500 mb-1">Título</label>
+          <input
+            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+            value={state.thanksTitle}
+            onChange={e => onChange({ thanksTitle: e.target.value })}
+          />
+        </div>
+        <div>
+          <label className="block text-xs font-medium text-slate-500 mb-1">Contenido</label>
+          <textarea
+            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none"
+            rows={3}
+            value={state.thanksBody}
+            onChange={e => onChange({ thanksBody: e.target.value })}
+          />
+        </div>
+        <div className="grid grid-cols-2 gap-3">
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Duración (segundos)</label>
+            <input
+              type="number"
+              min={1}
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+              value={state.thanksDuration}
+              onChange={e => onChange({ thanksDuration: e.target.value })}
+              placeholder="Sin límite"
+            />
+          </div>
+          <div>
+            <label className="block text-xs font-medium text-slate-500 mb-1">Redirect URL</label>
+            <input
+              type="url"
+              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
+              value={state.redirectUrl}
+              onChange={e => onChange({ redirectUrl: e.target.value })}
+              placeholder="https://…"
+            />
+          </div>
+        </div>
+      </div>
     </div>
   )
 }

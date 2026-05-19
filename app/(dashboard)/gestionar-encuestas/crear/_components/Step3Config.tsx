@@ -156,49 +156,20 @@ export default function Step3Config({ state, onChange, editingId }: Props) {
         <p className="text-xs text-slate-400 mt-1">Opcional. Al llegar esa fecha la encuesta se pausa automáticamente.</p>
       </div>
 
-      {/* Thanks page */}
-      <div className="space-y-3 border-t border-slate-100 pt-5">
-        <p className="text-sm font-semibold text-slate-700">Página de gracias</p>
-        <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">Título</label>
+      {/* Multiple responses */}
+      <div className="border-t border-slate-100 pt-5">
+        <label className="flex items-center gap-2.5 cursor-pointer select-none">
           <input
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
-            value={state.thanksTitle}
-            onChange={e => onChange({ thanksTitle: e.target.value })}
+            type="checkbox"
+            checked={state.allowMultipleResponses}
+            onChange={e => onChange({ allowMultipleResponses: e.target.checked })}
+            className="rounded border-slate-300 text-[#7A288A] focus:ring-purple-300"
           />
-        </div>
-        <div>
-          <label className="block text-xs font-medium text-slate-500 mb-1">Contenido</label>
-          <textarea
-            className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300 resize-none"
-            rows={3}
-            value={state.thanksBody}
-            onChange={e => onChange({ thanksBody: e.target.value })}
-          />
-        </div>
-        <div className="grid grid-cols-2 gap-3">
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Duración (segundos)</label>
-            <input
-              type="number"
-              min={1}
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
-              value={state.thanksDuration}
-              onChange={e => onChange({ thanksDuration: e.target.value })}
-              placeholder="Sin límite"
-            />
-          </div>
-          <div>
-            <label className="block text-xs font-medium text-slate-500 mb-1">Redirect URL</label>
-            <input
-              type="url"
-              className="w-full border border-slate-200 rounded-xl px-4 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-purple-300"
-              value={state.redirectUrl}
-              onChange={e => onChange({ redirectUrl: e.target.value })}
-              placeholder="https://…"
-            />
-          </div>
-        </div>
+          <span className="text-sm font-semibold text-slate-700">Permitir múltiples respuestas</span>
+        </label>
+        <p className="text-xs text-slate-400 mt-1 ml-6">
+          Por defecto cada usuario solo puede responder una vez por dispositivo. Activá esta opción para permitir respuestas ilimitadas.
+        </p>
       </div>
     </div>
   )

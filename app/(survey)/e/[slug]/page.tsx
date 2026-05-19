@@ -428,7 +428,7 @@ export default function SurveyPage() {
   const [currentPageIdx, setCurrentPageIdx] = useState(0)
   const [pageHistory, setPageHistory] = useState<number[]>([])
   const [answers, setAnswers] = useState<Record<string, unknown>>({})
-  const [status, setStatus] = useState<'loading' | 'not_found' | 'closed' | 'active' | 'success'>('loading')
+  const [status, setStatus] = useState<'loading' | 'not_found' | 'closed' | 'already_answered' | 'active' | 'success'>('loading')
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -439,6 +439,16 @@ export default function SurveyPage() {
         if (!r.ok) { setStatus('not_found'); return }
         const data = await r.json()
         setSurvey(data)
+
+        // Single-response enforcement: block if already answered and multiple not allowed
+        if (!data.allow_multiple_responses) {
+          const key = `survey_answered_${data.id}`
+          if (typeof window !== 'undefined' && localStorage.getItem(key)) {
+            setStatus('already_answered')
+            return
+          }
+        }
+
         const qs = (data.survey_questions ?? []) as SurveyQuestion[]
         setQuestions(qs)
 
@@ -517,6 +527,12 @@ export default function SurveyPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ var1, var2, var3, answers: answerPayload }),
     })
+
+    // Mark as answered in localStorage so single-response surveys block re-entry
+    if (!s.allow_multiple_responses && typeof window !== 'undefined') {
+      localStorage.setItem(`survey_answered_${s.id}`, '1')
+    }
+
     setSubmitting(false)
     setStatus('success')
   }
@@ -638,6 +654,15 @@ export default function SurveyPage() {
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 p-6 text-center">
         <p className="text-2xl font-bold text-gray-700">Esta encuesta está cerrada</p>
         <p className="text-gray-400 text-sm">Ya no acepta nuevas respuestas.</p>
+      </div>
+    )
+  }
+
+  if (status === 'already_answered') {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center gap-4 p-6 text-center">
+        <p className="text-2xl font-bold text-gray-700">¡Ya respondiste esta encuesta!</p>
+        <p className="text-gray-400 text-sm">Gracias por tu participación. Solo se permite una respuesta por dispositivo.</p>
       </div>
     )
   }

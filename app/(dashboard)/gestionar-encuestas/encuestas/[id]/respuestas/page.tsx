@@ -22,9 +22,9 @@ function formatValue(value: unknown): string {
 }
 
 function formatDate(iso: string) {
-  return new Date(iso).toLocaleDateString('es-AR', {
-    day: '2-digit', month: '2-digit', year: 'numeric',
-  })
+  // Use UTC date (first 10 chars of the timestamp) to stay consistent with filter and CSV
+  const [year, month, day] = iso.slice(0, 10).split('-')
+  return `${day}/${month}/${year}`
 }
 
 // YYYY-MM-DD from Date
@@ -69,20 +69,12 @@ export default function RespuestasPage() {
     })
   }, [id])
 
-  // Filtered responses
+  // Filtered responses — compare UTC dates (slice of timestamp string) to match display and CSV
   const filtered = useMemo(() => {
     return responses.filter(r => {
-      const ts = new Date(r.completed_at)
-      if (dateFrom) {
-        const from = new Date(dateFrom)
-        from.setHours(0, 0, 0, 0)
-        if (ts < from) return false
-      }
-      if (dateTo) {
-        const to = new Date(dateTo)
-        to.setHours(23, 59, 59, 999)
-        if (ts > to) return false
-      }
+      const utcDate = r.completed_at.slice(0, 10)
+      if (dateFrom && utcDate < dateFrom) return false
+      if (dateTo && utcDate > dateTo) return false
       return true
     })
   }, [responses, dateFrom, dateTo])

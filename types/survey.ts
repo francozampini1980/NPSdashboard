@@ -105,6 +105,7 @@ export interface Survey {
   var1_name: string | null
   var2_name: string | null
   var3_name: string | null
+  allow_multiple_responses: boolean
   created_by: string | null
   created_at: string
   updated_at: string
@@ -169,6 +170,8 @@ export interface BuilderState {
   var1Name: string
   var2Name: string
   var3Name: string
+  // Response limits
+  allowMultipleResponses: boolean
 }
 
 export function defaultBuilderState(): BuilderState {
@@ -189,6 +192,7 @@ export function defaultBuilderState(): BuilderState {
     var1Name: '',
     var2Name: '',
     var3Name: '',
+    allowMultipleResponses: false,
   }
 }
 
